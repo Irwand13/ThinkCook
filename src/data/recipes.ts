@@ -22,7 +22,7 @@ export const recipes: Recipe[] = [
   {
     id: 2,
     title: 'Nasi Goreng Spesial',
-    author: 'Rizky',
+    author: 'Szoboszlai',
     description: 'Nasi goreng sederhana dengan telur, ayam, dan bayam.',
     category: 'Makanan',
     cookTime: 15,

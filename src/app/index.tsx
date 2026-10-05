@@ -69,7 +69,7 @@ export default function HomeScreen() {
     Alert.alert(
       'Tambah Resep',
       'Tambahkan object baru di file data/recipes.ts, ' +
-        'lalu UI otomatis menampilkan resep tersebut.'
+      'lalu UI otomatis menampilkan resep tersebut.'
     );
   };
 
@@ -118,33 +118,35 @@ export default function HomeScreen() {
         )}
       </View>
 
-      {/* ============ KATEGORI (horizontal ScrollView) ============ */}
-      <Text style={styles.categoryTitle}>Kategori</Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.categoryRow}
-      >
-        {categories.map((category: string) => (
-          <Pressable
-            key={category}
-            style={[
-              styles.categoryChip,
-              selectedCategory === category && styles.categoryChipActive,
-            ]}
-            onPress={() => setSelectedCategory(category)}
-          >
-            <Text
+      {/* ============ KATEGORI (sticky, tidak ikut scroll) ============ */}
+      <View style={styles.categorySection}>
+        <Text style={styles.categoryTitle}>Kategori</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoryRow}
+        >
+          {categories.map((category: string) => (
+            <Pressable
+              key={category}
               style={[
-                styles.categoryText,
-                selectedCategory === category && styles.categoryTextActive,
+                styles.categoryChip,
+                selectedCategory === category && styles.categoryChipActive,
               ]}
+              onPress={() => setSelectedCategory(category)}
             >
-              {category}
-            </Text>
-          </Pressable>
-        ))}
-      </ScrollView>
+              <Text
+                style={[
+                  styles.categoryText,
+                  selectedCategory === category && styles.categoryTextActive,
+                ]}
+              >
+                {category}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </View>
 
       {/* ============ RECIPE FEED ============ */}
       <ScrollView

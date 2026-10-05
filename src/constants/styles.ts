@@ -78,15 +78,20 @@ export const styles = StyleSheet.create({
   },
 
   // Category
+  categorySection: {
+    backgroundColor: colors.background,
+    paddingHorizontal: 20,
+    paddingBottom: 6,
+    zIndex: 1,
+  },
   categoryTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: colors.text,
-    paddingHorizontal: 20,
     marginBottom: 10,
   },
   categoryRow: {
-    paddingHorizontal: 20,
+    paddingBottom: 8,
   },
   categoryChip: {
     paddingHorizontal: 16,
@@ -115,14 +120,12 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: colors.text,
-    paddingHorizontal: 20,
-    marginTop: 20,
+    marginTop: 10,
     marginBottom: 4,
   },
   feedSubtitle: {
     fontSize: 13,
     color: colors.secondary,
-    paddingHorizontal: 20,
     marginBottom: 8,
   },
   listContent: {
