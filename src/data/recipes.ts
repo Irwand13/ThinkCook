@@ -9,14 +9,14 @@ import { Recipe } from '../types/recipe';
 export const recipes: Recipe[] = [
   {
     id: 1,
-    title: 'Seblak Bandung',
-    author: 'Amanda',
+    title: 'Seblak Josjis',
+    author: 'Irwan ',
     description:
-      'Seblak pedas khas Bandung dengan kerupuk, telur, dan berbagai topping.',
+      'Seblak Pedas bisa bikin anak jadi lincah dan cerdas.',
     category: 'Makanan',
     cookTime: 25,
     difficulty: 'Mudah',
-    likes: 120,
+    likes: 1945,
     image: 'https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=800',
   },
   {
