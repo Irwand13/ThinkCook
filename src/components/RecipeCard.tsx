@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { useState } from 'react';
 import {
-  Alert,
   Image,
   Pressable,
   StyleSheet,
@@ -20,35 +21,44 @@ export const formatTime = (minutes: number): string => {
 };
 
 /**
- * CUSTOM FUNCTION
- * Menampilkan informasi lengkap resep ketika tombol ditekan.
- */
-export const showRecipeDetail = (recipe: Recipe): void => {
-  Alert.alert(
-    recipe.title,
-    `${recipe.description}\n\nKategori: ${recipe.category}\nWaktu: ${formatTime(
-      recipe.cookTime
-    )}\nTingkat kesulitan: ${recipe.difficulty}\nDimuat oleh: ${
-      recipe.author
-    }`,
-    [{ text: 'Tutup', style: 'cancel' }]
-  );
-};
-
-/**
- * CUSTOM FUNCTION
- * Menangani aksi Like pada sebuah resep.
- */
-export const handleLike = (recipeTitle: string): void => {
-  Alert.alert('Berhasil', `Kamu menyukai ${recipeTitle}. Resep ditambahkan ke favorit.`);
-};
-
-/**
  * COMPONENT: RecipeCard
  * Menampilkan satu resep sebagai kartu (card).
  * Data resep dikirim lewat props `recipe`.
  */
 export default function RecipeCard({ recipe }: { recipe: Recipe }) {
+  // useState: menyimpan status apakah resep sudah di-like atau belum
+  const [isLiked, setIsLiked] = useState(false);
+
+  // useState: menyimpan jumlah like yang ditampilkan pada kartu
+  const [likeCount, setLikeCount] = useState(recipe.likes);
+
+  /**
+   * CUSTOM FUNCTION
+   * Menangani aksi Like/Unlike pada sebuah resep.
+   * Jika belum di-like, jumlah like bertambah 1.
+   * Jika sudah di-like, jumlah like berkurang 1 (unlike).
+   */
+  const handleLike = (): void => {
+    if (isLiked) {
+      // Batalkan like: kurangi jumlah like dan ubah status menjadi belum di-like
+      setLikeCount(likeCount - 1);
+      setIsLiked(false);
+    } else {
+      // Berikan like: tambah jumlah like dan ubah status menjadi sudah di-like
+      setLikeCount(likeCount + 1);
+      setIsLiked(true);
+    }
+  };
+
+  /**
+   * CUSTOM FUNCTION
+   * Navigasi ke halaman Detail Resep menggunakan router.push().
+   * ID resep dikirim sebagai parameter dynamic route.
+   */
+  const handleViewDetail = (): void => {
+    router.push({ pathname: '/recipes/[id]', params: { id: String(recipe.id) } });
+  };
+
   return (
     <View style={cardStyles.card}>
       {/* Author */}
@@ -104,15 +114,20 @@ export default function RecipeCard({ recipe }: { recipe: Recipe }) {
       <View style={cardStyles.actionRow}>
         <Pressable
           style={cardStyles.likeButton}
-          onPress={() => handleLike(recipe.title)}
+          onPress={handleLike}
         >
-          <Ionicons name="heart" size={18} color={colors.primary} />
-          <Text style={cardStyles.likeText}>{recipe.likes}</Text>
+          {/* Icon berubah antara heart (filled) dan heart-outline sesuai status like */}
+          <Ionicons
+            name={isLiked ? 'heart' : 'heart-outline'}
+            size={18}
+            color={colors.primary}
+          />
+          <Text style={cardStyles.likeText}>{likeCount}</Text>
         </Pressable>
 
         <Pressable
           style={cardStyles.detailButton}
-          onPress={() => showRecipeDetail(recipe)}
+          onPress={handleViewDetail}
         >
           <Text style={cardStyles.detailButtonText}>Lihat Resep</Text>
         </Pressable>

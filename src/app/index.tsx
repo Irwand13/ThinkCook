@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   Pressable,
@@ -38,21 +38,42 @@ export default function HomeScreen() {
   // STATE: kata kunci yang diketik pengguna di Search Bar
   const [search, setSearch] = useState('');
 
+  // STATE: kata kunci pencarian yang sudah di-debounce (ditunda 300ms)
+  // Digunakan untuk menyaring resep agar tidak filter setiap huruf yang diketik
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
   // STATE: kategori yang sedang dipilih
   const [selectedCategory, setSelectedCategory] = useState('Semua');
+
+  /**
+   * useEffect: implementasi debounce pada pencarian resep.
+   * Setiap kali pengguna mengetik (state `search` berubah),
+   * useEffect membuat timer 300ms sebelum memperbarui `debouncedSearch`.
+   * Jika pengguna mengetik lagi sebelum 300ms, timer sebelumnya dibatalkan
+   * menggunakan clearTimeout (cleanup function).
+   * Hasilnya, pencarian hanya dijalankan setelah pengguna berhenti mengetik.
+   */
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+
+    // Cleanup: batalkan timer sebelumnya ketika search berubah lagi
+    return () => clearTimeout(timer);
+  }, [search]);
 
   /**
    * CUSTOM FUNCTION
    * Menyaring data resep.
    * Resep hanya ditampilkan jika:
-   * 1. judulnya mengandung kata kunci pencarian, DAN
+   * 1. judulnya mengandung kata kunci pencarian (menggunakan debouncedSearch), DAN
    * 2. kategorinya cocok dengan kategori yang dipilih.
    */
   const getFilteredRecipes = (): Recipe[] => {
     return recipes.filter((recipe: Recipe) => {
       const cocokSearching = recipe.title
         .toLowerCase()
-        .includes(search.toLowerCase());
+        .includes(debouncedSearch.toLowerCase());
 
       const cocokKategori =
         selectedCategory === 'Semua' || recipe.category === selectedCategory;
