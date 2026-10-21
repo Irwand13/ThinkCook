@@ -68,19 +68,13 @@ export default function HomeScreen() {
     });
   };
 
-  /**
-   * CUSTOM FUNCTION
-   * Aksi ketika tombol tambah (+) ditekan.
-   */
+  // BUTTON
   const handleAddRecipe = (): void => {
+    router.push('/')
   };
 
-  /**
-   * CUSTOM FUNCTION
-   * Aksi ketika icon profile ditekan.
-   */
   const handleProfile = (): void => {
-    router.push('/profil')
+    router.push('/');
   };
 
   const filteredRecipes = getFilteredRecipes();
