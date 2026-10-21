@@ -14,6 +14,7 @@ import RecipeCard from '../components/RecipeCard';
 import { colors, styles } from '../constants/styles';
 import { recipes } from '../data/recipes';
 import { Recipe } from '../types/recipe';
+import { router } from 'expo-router';
 
 /**
  * NAMA APLIKASI
@@ -45,14 +46,6 @@ export default function HomeScreen() {
   // STATE: kategori yang sedang dipilih
   const [selectedCategory, setSelectedCategory] = useState('Semua');
 
-  /**
-   * useEffect: implementasi debounce pada pencarian resep.
-   * Setiap kali pengguna mengetik (state `search` berubah),
-   * useEffect membuat timer 300ms sebelum memperbarui `debouncedSearch`.
-   * Jika pengguna mengetik lagi sebelum 300ms, timer sebelumnya dibatalkan
-   * menggunakan clearTimeout (cleanup function).
-   * Hasilnya, pencarian hanya dijalankan setelah pengguna berhenti mengetik.
-   */
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
@@ -62,13 +55,6 @@ export default function HomeScreen() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  /**
-   * CUSTOM FUNCTION
-   * Menyaring data resep.
-   * Resep hanya ditampilkan jika:
-   * 1. judulnya mengandung kata kunci pencarian (menggunakan debouncedSearch), DAN
-   * 2. kategorinya cocok dengan kategori yang dipilih.
-   */
   const getFilteredRecipes = (): Recipe[] => {
     return recipes.filter((recipe: Recipe) => {
       const cocokSearching = recipe.title
@@ -87,11 +73,6 @@ export default function HomeScreen() {
    * Aksi ketika tombol tambah (+) ditekan.
    */
   const handleAddRecipe = (): void => {
-    Alert.alert(
-      'Tambah Resep',
-      'Tambahkan object baru di file data/recipes.ts, ' +
-      'lalu UI otomatis menampilkan resep tersebut.'
-    );
   };
 
   /**
@@ -99,7 +80,7 @@ export default function HomeScreen() {
    * Aksi ketika icon profile ditekan.
    */
   const handleProfile = (): void => {
-    Alert.alert('Profil', `Selamat datang di ${APP_NAME}!`);
+    router.push('/profil')
   };
 
   const filteredRecipes = getFilteredRecipes();

@@ -1,9 +1,8 @@
 import { StyleSheet } from 'react-native';
 
-/**
- * WARNA APLIKASI
- * Kumpulkan warna di satu tempat supaya mudah diganti saat demo.
- */
+
+//  * WARNA APLIKASI
+
 export const colors = {
   background: '#FFF8F0',
   primary: '#FF6B35',
@@ -12,11 +11,9 @@ export const colors = {
   secondary: '#777777',
 };
 
-/**
- * EXTERNAL STYLING
- * Semua style utama ditulis di sini dengan StyleSheet.create(),
- * bukan ditulis langsung (inline) di dalam JSX.
- */
+
+// * EXTERNAL STYLING
+
 export const styles = StyleSheet.create({
   container: {
     flex: 1,

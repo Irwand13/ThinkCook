@@ -5,16 +5,6 @@ import { colors } from '../../constants/styles';
 import { recipes } from '../../data/recipes';
 import { formatTime } from '../../components/RecipeCard';
 
-/**
- * HALAMAN DETAIL RESEP
- * Menampilkan informasi lengkap dari satu resep yang dipilih pengguna.
- *
- * Navigasi:
- * - useLocalSearchParams() digunakan untuk mengambil ID resep dari parameter URL.
- * - router.back() digunakan untuk kembali ke halaman sebelumnya.
- * - router.canGoBack() digunakan untuk mengecek apakah ada riwayat navigasi.
- * - router.replace() digunakan sebagai fallback jika tidak ada riwayat navigasi.
- */
 export default function RecipeDetailScreen() {
   // Mengambil parameter 'id' dari dynamic route menggunakan useLocalSearchParams
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -22,13 +12,6 @@ export default function RecipeDetailScreen() {
   // Mencari data resep berdasarkan ID yang diterima dari parameter navigasi
   const recipe = recipes.find((r) => r.id === Number(id));
 
-  /**
-   * CUSTOM FUNCTION
-   * Menangani aksi tombol Kembali.
-   * Menggunakan router.canGoBack() untuk mengecek apakah ada riwayat navigasi.
-   * Jika ada riwayat, gunakan router.back() untuk kembali ke halaman sebelumnya.
-   * Jika tidak ada riwayat, gunakan router.replace('/') untuk ke halaman Home.
-   */
   const handleGoBack = (): void => {
     if (router.canGoBack()) {
       // Ada riwayat navigasi, kembali ke halaman sebelumnya

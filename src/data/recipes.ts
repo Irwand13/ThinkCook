@@ -1,11 +1,5 @@
 import { Recipe } from '../types/recipe';
 
-/**
- * DATA RESEP (Array of Objects)
- *
- * Semua data resep disimpan di satu file agar mudah dibaca dan mudah
- * dimodifikasi saat demo (tambah / hapus resep, ganti jumlah like, dll).
- */
 export const recipes: Recipe[] = [
   {
     id: 1,
