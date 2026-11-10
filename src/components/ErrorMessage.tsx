@@ -2,13 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, fonts } from '../constants/styles';
 
-/**
- * COMPONENT: ErrorMessage
- * Ditampilkan saat Promise dari API berstatus "rejected" (gagal):
- * jaringan mati, server error, atau timeout. Tombol "Coba Lagi"
- * memanggil prop onRetry untuk mengulang proses async dari awal —
- * pola standar penanganan error pada pemanggilan API.
- */
 export default function ErrorMessage({
   message,
   onRetry,

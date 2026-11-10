@@ -18,42 +18,25 @@ import { isFavorite, toggleFavorite } from '../../services/favoriteService';
 import { getRecipeById } from '../../services/recipeService';
 import { Recipe } from '../../types/recipe';
 
-/**
- * LAYAR DETAIL RESEP — dynamic route [id]
- * ID resep dibaca dari parameter rute, lalu detail lengkapnya diambil
- * dari API saat layar dibuka (di Modul 2 data dicari dari array lokal;
- * sekarang diambil asynchronous lewat getRecipeById).
- *
- * Memuat = tidak ditemukan: bila API menjawab tidak ada resep untuk ID
- * ini, service melempar Error('Resep tidak ditemukan') yang ditangkap
- * di sini dan ditampilkan sebagai tampilan error + tombol kembali.
- */
 export default function RecipeDetailScreen() {
-  // Mengambil parameter 'id' dari dynamic route menggunakan useLocalSearchParams
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  // State data detail + status proses async-nya
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // State favorit (tersinkron dengan AsyncStorage)
   const [isFav, setIsFav] = useState(false);
 
-  // State interaktif memasak: bahan yang sudah disiapkan (index-nya),
-  // langkah yang sudah selesai, dan apakah mode masak sedang aktif.
   const [checkedIngredients, setCheckedIngredients] = useState<number[]>([]);
   const [doneSteps, setDoneSteps] = useState<number[]>([]);
   const [cookingMode, setCookingMode] = useState(false);
 
-  /** Memuat (atau memuat ulang) detail resep dari API. */
   const loadRecipe = async (): Promise<void> => {
     setLoading(true);
     setError(null);
     try {
       const data = await getRecipeById(Number(id));
       setRecipe(data);
-      // Cek status favorit resep ini di penyimpanan lokal.
       setIsFav(await isFavorite(data.id));
     } catch (err) {
       setError(
@@ -64,10 +47,6 @@ export default function RecipeDetailScreen() {
     }
   };
 
-  // Jalankan pemuatan setiap parameter id berubah. Hasil async hanya
-  // dimasukkan ke state setelah Promise selesai (di dalam blok try/catch
-  // sesudah await); flag `aktif` menjaga agar respons yang terlambat
-  // tidak menimpa data bila pengguna sudah pindah layar.
   useEffect(() => {
     let aktif = true;
 
@@ -79,7 +58,6 @@ export default function RecipeDetailScreen() {
         }
         setRecipe(data);
         setIsFav(await isFavorite(data.id));
-        // Reset centang bahan & langkah untuk resep yang baru dibuka.
         setCheckedIngredients([]);
         setDoneSteps([]);
         setCookingMode(false);
@@ -104,15 +82,12 @@ export default function RecipeDetailScreen() {
 
   const handleGoBack = (): void => {
     if (router.canGoBack()) {
-      // Ada riwayat navigasi, kembali ke halaman sebelumnya
       router.back();
     } else {
-      // Tidak ada riwayat navigasi, arahkan ke halaman Home
       router.replace('/');
     }
   };
 
-  /** Membalik status favorit resep yang sedang dibuka. */
   const handleToggleFavorite = async (): Promise<void> => {
     if (!recipe) {
       return;
@@ -126,7 +101,6 @@ export default function RecipeDetailScreen() {
     setIsFav(statusTerbaru);
   };
 
-  /** Menandai/melepas satu bahan pada checklist (berdasarkan index). */
   const toggleIngredient = (index: number): void => {
     setCheckedIngredients((prev) =>
       prev.includes(index)
@@ -135,7 +109,6 @@ export default function RecipeDetailScreen() {
     );
   };
 
-  /** Menandai/melepas satu langkah memasak sebagai selesai. */
   const toggleStep = (index: number): void => {
     setDoneSteps((prev) =>
       prev.includes(index)
@@ -144,7 +117,6 @@ export default function RecipeDetailScreen() {
     );
   };
 
-  /* ---------- Status: sedang memuat ---------- */
   if (loading) {
     return (
       <View style={detailStyles.statusContainer}>
@@ -153,7 +125,6 @@ export default function RecipeDetailScreen() {
     );
   }
 
-  /* ---------- Status: gagal / resep tidak ditemukan ---------- */
   if (error || !recipe) {
     return (
       <View style={detailStyles.statusContainer}>
@@ -169,8 +140,7 @@ export default function RecipeDetailScreen() {
     );
   }
 
-  // Instruksi dari API adalah satu teks panjang; pecah per baris menjadi
-  // langkah-langkah bernomor (baris kosong & sisa penomoran dibuang).
+  // instruksi dari API masih satu teks panjang, pecah per baris di sini
   const steps = recipe.instructions
     .split(/\r?\n+/)
     .map((step) => step.replace(/^\s*(STEP\s*)?\d+[.)]?\s*/i, '').trim())
@@ -181,14 +151,11 @@ export default function RecipeDetailScreen() {
       style={detailStyles.container}
       showsVerticalScrollIndicator={false}
     >
-      {/* Foto resep full-width */}
       <Image source={{ uri: recipe.image }} style={detailStyles.image} />
 
       <View style={detailStyles.content}>
-        {/* Judul */}
         <Text style={detailStyles.title}>{recipe.title}</Text>
 
-        {/* Baris chip: kategori, asal, dan tag dari API */}
         <View style={detailStyles.chipRow}>
           <View style={detailStyles.chipPrimary}>
             <Text style={detailStyles.chipPrimaryText}>{recipe.category}</Text>
@@ -203,7 +170,6 @@ export default function RecipeDetailScreen() {
           ))}
         </View>
 
-        {/* Tombol favorit */}
         <Pressable
           style={detailStyles.favoriteButton}
           onPress={handleToggleFavorite}
@@ -218,7 +184,6 @@ export default function RecipeDetailScreen() {
           </Text>
         </Pressable>
 
-        {/* Ringkasan angka */}
         <View style={detailStyles.statRow}>
           <StatCard
             icon="restaurant-outline"
@@ -233,7 +198,6 @@ export default function RecipeDetailScreen() {
           />
         </View>
 
-        {/* ============ BAHAN-BAHAN (checklist interaktif) ============ */}
         <Text style={detailStyles.sectionTitle}>Bahan-bahan</Text>
         <Text style={detailStyles.sectionHint}>
           Ketuk bahan untuk menandai yang sudah kamu siapkan.
@@ -272,7 +236,6 @@ export default function RecipeDetailScreen() {
           })}
         </View>
 
-        {/* ============ CARA MEMBUAT (langkah bernomor) ============ */}
         <View style={detailStyles.sectionHeaderRow}>
           <Text style={detailStyles.sectionTitle}>Cara Membuat</Text>
           <Text style={detailStyles.progressText}>
@@ -280,7 +243,6 @@ export default function RecipeDetailScreen() {
           </Text>
         </View>
 
-        {/* Banner mode masak */}
         {cookingMode && (
           <View style={detailStyles.cookingBanner}>
             <Ionicons name="flame-outline" size={19} color={colors.sage} />
@@ -322,7 +284,6 @@ export default function RecipeDetailScreen() {
           );
         })}
 
-        {/* CTA: mulai memasak */}
         {!cookingMode && (
           <Pressable
             style={detailStyles.cookButton}
@@ -333,7 +294,6 @@ export default function RecipeDetailScreen() {
           </Pressable>
         )}
 
-        {/* Video YouTube (hanya bila API menyediakan link-nya) */}
         {recipe.youtube ? (
           <Pressable
             style={detailStyles.youtubeButton}
@@ -348,7 +308,6 @@ export default function RecipeDetailScreen() {
           </Pressable>
         ) : null}
 
-        {/* Tombol kembali */}
         <Pressable style={detailStyles.backButton} onPress={handleGoBack}>
           <Ionicons name="arrow-back" size={18} color={colors.white} />
           <Text style={detailStyles.backButtonText}>Kembali</Text>

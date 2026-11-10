@@ -10,20 +10,10 @@ import { colors, styles } from '../../constants/styles';
 import { getFavorites } from '../../services/favoriteService';
 import { RecipeSummary } from '../../types/recipe';
 
-/**
- * LAYAR FAVORIT
- * Menampilkan resep yang disimpan pengguna di AsyncStorage perangkat.
- *
- * Data dimuat ulang SETIAP layar ini fokus (useFocusEffect), bukan hanya
- * saat pertama dibuka — karena favorit bisa berubah dari layar lain
- * (Beranda, Detail) selagi layar ini tidak terlihat. getFavorites()
- * adalah fungsi async, jadi hasilnya ditunggu lalu dimasukkan ke state.
- */
 export default function FavoriteScreen() {
   const [favorites, setFavorites] = useState<RecipeSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // useFocusEffect: callback berjalan tiap kali tab ini menjadi aktif.
   useFocusEffect(
     useCallback(() => {
       let aktif = true;

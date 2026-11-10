@@ -2,15 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 import { cardShadow, colors, fonts } from '../constants/styles';
 
-/** Nama ikon Ionicons yang valid, diambil dari glyphMap bawaan library. */
 type IoniconsName = keyof typeof Ionicons.glyphMap;
 
-/**
- * COMPONENT: StatCard
- * Kartu kecil berisi satu angka/statistik: ikon + nilai + label.
- * Dipakai berjajar (mis. 3 kartu) di halaman Detail dan Profil —
- * datanya dikirim lewat props agar satu komponen melayani banyak angka.
- */
 export default function StatCard({
   icon,
   label,

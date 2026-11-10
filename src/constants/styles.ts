@@ -1,11 +1,5 @@
 import { StyleSheet } from 'react-native';
 
-/**
- * TOKEN DESAIN — satu sumber kebenaran untuk warna & font.
- * Semua layar dan komponen WAJIB mengambil warna/font dari sini,
- * jangan menulis kode warna hex langsung di file lain.
- */
-
 export const colors = {
   background: '#FAF3E7', // Paper — latar utama aplikasi
   primary: '#E4572E', // Terracotta — warna aksi utama
@@ -20,10 +14,6 @@ export const colors = {
   white: '#FFFFFF',
 };
 
-/**
- * Nama font persis seperti yang dimuat useFonts di _layout.tsx:
- * Fraunces untuk judul (serif hangat), Plus Jakarta Sans untuk isi UI.
- */
 export const fonts = {
   heading: 'Fraunces_700Bold',
   headingSemi: 'Fraunces_600SemiBold',
@@ -32,7 +22,6 @@ export const fonts = {
   bodyBold: 'PlusJakartaSans_700Bold',
 };
 
-/** Bayangan hangat & lembut yang dipakai konsisten pada kartu. */
 export const cardShadow = {
   elevation: 3,
   shadowColor: '#7A4A21',
@@ -41,10 +30,6 @@ export const cardShadow = {
   shadowOffset: { width: 0, height: 3 },
 };
 
-/**
- * STYLE BERSAMA antar-layar: kerangka halaman, header, kolom pencarian,
- * dan chip kategori dipakai ulang oleh Beranda & Pencarian.
- */
 export const styles = StyleSheet.create({
   container: {
     flex: 1,

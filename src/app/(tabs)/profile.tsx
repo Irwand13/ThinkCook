@@ -9,19 +9,10 @@ import { cardShadow, colors, fonts } from '../../constants/styles';
 import { getCategories } from '../../services/recipeService';
 import { getFavorites } from '../../services/favoriteService';
 
-/**
- * LAYAR PROFIL
- * Isi datanya dipertahankan dari Modul 2 (nama & deskripsi aplikasi),
- * tetapi tampilannya dirombak mengikuti tema desain baru, dan dua
- * angkanya kini LIVE: jumlah favorit dibaca dari AsyncStorage dan
- * jumlah kategori dihitung dari API setiap layar ini fokus.
- */
 export default function ProfileScreen() {
   const [favoriteCount, setFavoriteCount] = useState(0);
   const [categoryCount, setCategoryCount] = useState(0);
 
-  // Segarkan angka setiap layar Profil dibuka: favorit bisa berubah
-  // dari tab lain, dan daftar kategori adalah data API (bisa berubah).
   useFocusEffect(
     useCallback(() => {
       let aktif = true;
@@ -38,7 +29,6 @@ export default function ProfileScreen() {
           }
         })
         .catch(() => {
-          // API tidak terjangkau: angka kategori dibiarkan 0.
         });
 
       return () => {
@@ -54,14 +44,12 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={profileStyles.content}
       >
-        {/* ============ IDENTITAS ============ */}
         <View style={profileStyles.avatarCircle}>
           <Text style={profileStyles.avatarInitial}>P</Text>
         </View>
         <Text style={profileStyles.name}>Profil Pengguna</Text>
         <Text style={profileStyles.subtitle}>Selamat datang di ThinkCook!</Text>
 
-        {/* ============ STATISTIK ============ */}
         <View style={profileStyles.statRow}>
           <StatCard
             icon="heart-outline"
@@ -76,7 +64,6 @@ export default function ProfileScreen() {
           <StatCard icon="layers-outline" label="Async & API" value="Modul 3" />
         </View>
 
-        {/* ============ INFO APLIKASI ============ */}
         <View style={profileStyles.infoCard}>
           <View style={profileStyles.infoHeader}>
             <Ionicons name="information-circle-outline" size={20} color={colors.primary} />

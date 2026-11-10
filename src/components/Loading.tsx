@@ -1,12 +1,6 @@
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { colors, fonts } from '../constants/styles';
 
-/**
- * COMPONENT: Loading
- * Indikator putar yang ditampilkan selama proses asynchronous berjalan
- * (mis. menunggu respons API). State "loading" adalah bagian wajib dari
- * pola async: UI tidak boleh tampak diam/macet saat data sedang diambil.
- */
 export default function Loading({ message }: { message?: string }) {
   return (
     <View style={loadingStyles.container}>

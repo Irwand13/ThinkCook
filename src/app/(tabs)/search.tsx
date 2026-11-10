@@ -11,17 +11,7 @@ import { colors, styles } from '../../constants/styles';
 import { searchRecipes } from '../../services/recipeService';
 import { RecipeSummary } from '../../types/recipe';
 
-/**
- * LAYAR PENCARIAN
- * Kata kunci bisa datang dari parameter rute (dikirim Beranda lewat
- * params { q }) atau diketik langsung di sini. Pencarian ke API tidak
- * dijalankan pada setiap ketikan, melainkan ditunda dengan pola
- * DEBOUNCE 300ms (sama seperti pola Modul 2): API hanya dipanggil
- * setelah pengguna berhenti mengetik sejenak, agar server tidak
- * dibanjiri permintaan dan aplikasi terasa tetap ringan.
- */
 export default function SearchScreen() {
-  // Parameter 'q' dari rute (bila pengguna datang dari kolom cari Beranda)
   const { q } = useLocalSearchParams<{ q?: string }>();
 
   const [query, setQuery] = useState(q ?? '');
@@ -29,19 +19,15 @@ export default function SearchScreen() {
   const [results, setResults] = useState<RecipeSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Menandai apakah pencarian sudah pernah dijalankan (untuk keadaan awal)
   const [hasSearched, setHasSearched] = useState(false);
 
-  // Bila Beranda mengirim kata kunci baru lewat parameter rute, sesuaikan
-  // state query saat render (pola resmi React untuk "state turunan dari
-  // props/parameter yang berubah"), bukan lewat useEffect.
+  // samakan dengan param q dari Beranda kalau berubah
   const [prevQ, setPrevQ] = useState(q);
   if (q !== prevQ) {
     setPrevQ(q);
     setQuery(q ?? '');
   }
 
-  /** Menjalankan pencarian ke API untuk satu kata kunci. */
   const runSearch = async (keyword: string): Promise<void> => {
     setLoading(true);
     setError(null);
@@ -57,10 +43,7 @@ export default function SearchScreen() {
     }
   };
 
-  // DEBOUNCE 300ms: pencarian ke API ditunda sampai pengguna berhenti
-  // mengetik selama 300ms. Timer dibatalkan pada setiap ketikan baru
-  // (cleanup), jadi API tidak dipanggil untuk setiap huruf.
-  // Kata kunci kosong tidak dicari: layar menampilkan petunjuk awal.
+  // debounce 300ms, biar tidak manggil API tiap huruf
   useEffect(() => {
     const keyword = query.trim();
     if (keyword.length === 0) {
@@ -73,10 +56,8 @@ export default function SearchScreen() {
     return () => clearTimeout(timer);
   }, [query]);
 
-  // Kata kunci aktif saat ini (untuk pesan status di bawah).
   const activeKeyword = query.trim();
 
-  /** Isi layar di bawah kolom pencarian, sesuai status async saat ini. */
   const renderContent = () => {
     if (loading) {
       return <Loading message={`Mencari "${activeKeyword}"...`} />;
@@ -90,7 +71,6 @@ export default function SearchScreen() {
       );
     }
     if (activeKeyword.length === 0 || !hasSearched) {
-      // Keadaan awal: belum ada pencarian, tampilkan petunjuk.
       return (
         <View style={styles.emptyState}>
           <Ionicons name="search-outline" size={46} color={colors.secondary} />
@@ -138,7 +118,6 @@ export default function SearchScreen() {
         Jelajahi ribuan resep dari database TheMealDB
       </Text>
 
-      {/* ============ KOLOM PENCARIAN ============ */}
       <View style={styles.searchContainer}>
         <Ionicons name="search" size={20} color={colors.secondary} />
         <TextInput

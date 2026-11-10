@@ -2,12 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { colors, fonts } from '../../constants/styles';
 
-/**
- * TAB LAYOUT
- * Navigasi utama aplikasi berupa tab bar bawah dengan 4 layar:
- * Beranda, Cari, Favorit, dan Profil. Setiap file di folder (tabs)
- * otomatis menjadi satu tab; nama file = nama rute.
- */
 export default function TabsLayout() {
   return (
     <Tabs

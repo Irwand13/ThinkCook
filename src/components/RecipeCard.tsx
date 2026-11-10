@@ -6,21 +6,9 @@ import { cardShadow, colors, fonts } from '../constants/styles';
 import { isFavorite, toggleFavorite } from '../services/favoriteService';
 import { RecipeSummary } from '../types/recipe';
 
-/**
- * COMPONENT: RecipeCard
- * Menampilkan satu RecipeSummary sebagai kartu di daftar resep.
- * Karena datanya sekarang berasal dari API, kartu hanya membawa field
- * ringkas (judul, kategori, foto) — detail lengkap baru diambil saat
- * kartu ditekan dan halaman detail dibuka.
- */
 export default function RecipeCard({ recipe }: { recipe: RecipeSummary }) {
-  // Status favorit kartu ini, dibaca dari AsyncStorage (bukan state lokal
-  // semata) agar konsisten dengan layar Favorit dan halaman Detail.
   const [isFav, setIsFav] = useState(false);
 
-  // Saat kartu pertama kali tampil, periksa ke penyimpanan lokal apakah
-  // resep ini sudah difavoritkan. isFavorite() adalah fungsi async,
-  // jadi hasilnya diambil di dalam useEffect, bukan langsung di-render.
   useEffect(() => {
     let aktif = true;
 
@@ -30,26 +18,16 @@ export default function RecipeCard({ recipe }: { recipe: RecipeSummary }) {
       }
     });
 
-    // Cleanup: abaikan hasil bila kartu sudah tidak tampil.
     return () => {
       aktif = false;
     };
   }, [recipe.id]);
 
-  /**
-   * CUSTOM ASYNC FUNCTION
-   * Membalik status favorit lewat favoriteService lalu menyinkronkan
-   * ikon hati dengan status terbaru yang dikembalikan service.
-   */
   const handleToggleFavorite = async (): Promise<void> => {
     const statusTerbaru = await toggleFavorite(recipe);
     setIsFav(statusTerbaru);
   };
 
-  /**
-   * Navigasi ke halaman Detail Resep (dynamic route [id]).
-   * ID resep dikirim sebagai parameter rute.
-   */
   const handleViewDetail = (): void => {
     router.push({
       pathname: '/recipes/[id]',
@@ -59,11 +37,9 @@ export default function RecipeCard({ recipe }: { recipe: RecipeSummary }) {
 
   return (
     <Pressable style={cardStyles.card} onPress={handleViewDetail}>
-      {/* Foto resep dari URL yang diberikan API */}
       <Image source={{ uri: recipe.image }} style={cardStyles.image} />
 
       <View style={cardStyles.body}>
-        {/* Judul + tombol favorit */}
         <View style={cardStyles.titleRow}>
           <Text style={cardStyles.title} numberOfLines={2}>
             {recipe.title}
@@ -81,7 +57,6 @@ export default function RecipeCard({ recipe }: { recipe: RecipeSummary }) {
           </Pressable>
         </View>
 
-        {/* Chip kategori */}
         <View style={cardStyles.chip}>
           <Ionicons name="restaurant-outline" size={13} color={colors.sage} />
           <Text style={cardStyles.chipText}>{recipe.category}</Text>
