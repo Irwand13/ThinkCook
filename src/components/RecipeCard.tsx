@@ -1,229 +1,143 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useState } from 'react';
-import {
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { colors } from '../constants/styles';
-import { Recipe } from '../types/recipe';
-
-/**
- * CUSTOM FUNCTION
- * Mengubah angka menit menjadi teks yang enak dibaca,
- * contoh: 25 -> "25 menit"
- */
-export const formatTime = (minutes: number): string => {
-  return `${minutes} menit`;
-};
+import { useEffect, useState } from 'react';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { cardShadow, colors, fonts } from '../constants/styles';
+import { isFavorite, toggleFavorite } from '../services/favoriteService';
+import { RecipeSummary } from '../types/recipe';
 
 /**
  * COMPONENT: RecipeCard
- * Menampilkan satu resep sebagai kartu (card).
- * Data resep dikirim lewat props `recipe`.
+ * Menampilkan satu RecipeSummary sebagai kartu di daftar resep.
+ * Karena datanya sekarang berasal dari API, kartu hanya membawa field
+ * ringkas (judul, kategori, foto) — detail lengkap baru diambil saat
+ * kartu ditekan dan halaman detail dibuka.
  */
-export default function RecipeCard({ recipe }: { recipe: Recipe }) {
-  // useState: menyimpan status apakah resep sudah di-like atau belum
-  const [isLiked, setIsLiked] = useState(false);
+export default function RecipeCard({ recipe }: { recipe: RecipeSummary }) {
+  // Status favorit kartu ini, dibaca dari AsyncStorage (bukan state lokal
+  // semata) agar konsisten dengan layar Favorit dan halaman Detail.
+  const [isFav, setIsFav] = useState(false);
 
-  // useState: menyimpan jumlah like yang ditampilkan pada kartu
-  const [likeCount, setLikeCount] = useState(recipe.likes);
+  // Saat kartu pertama kali tampil, periksa ke penyimpanan lokal apakah
+  // resep ini sudah difavoritkan. isFavorite() adalah fungsi async,
+  // jadi hasilnya diambil di dalam useEffect, bukan langsung di-render.
+  useEffect(() => {
+    let aktif = true;
+
+    isFavorite(recipe.id).then((status) => {
+      if (aktif) {
+        setIsFav(status);
+      }
+    });
+
+    // Cleanup: abaikan hasil bila kartu sudah tidak tampil.
+    return () => {
+      aktif = false;
+    };
+  }, [recipe.id]);
 
   /**
-   * CUSTOM FUNCTION
-   * Menangani aksi Like/Unlike pada sebuah resep.
-   * Jika belum di-like, jumlah like bertambah 1.
-   * Jika sudah di-like, jumlah like berkurang 1 (unlike).
+   * CUSTOM ASYNC FUNCTION
+   * Membalik status favorit lewat favoriteService lalu menyinkronkan
+   * ikon hati dengan status terbaru yang dikembalikan service.
    */
-  const handleLike = (): void => {
-    if (isLiked) {
-      // Batalkan like: kurangi jumlah like dan ubah status menjadi belum di-like
-      setLikeCount(likeCount - 1);
-      setIsLiked(false);
-    } else {
-      // Berikan like: tambah jumlah like dan ubah status menjadi sudah di-like
-      setLikeCount(likeCount + 1);
-      setIsLiked(true);
-    }
+  const handleToggleFavorite = async (): Promise<void> => {
+    const statusTerbaru = await toggleFavorite(recipe);
+    setIsFav(statusTerbaru);
   };
 
   /**
-   * CUSTOM FUNCTION
-   * Navigasi ke halaman Detail Resep menggunakan router.push().
-   * ID resep dikirim sebagai parameter dynamic route.
+   * Navigasi ke halaman Detail Resep (dynamic route [id]).
+   * ID resep dikirim sebagai parameter rute.
    */
   const handleViewDetail = (): void => {
-    router.push({ pathname: '/recipes/[id]', params: { id: String(recipe.id) } });
+    router.push({
+      pathname: '/recipes/[id]',
+      params: { id: String(recipe.id) },
+    });
   };
 
   return (
-    <View style={cardStyles.card}>
-      {/* Author */}
-      <View style={cardStyles.authorRow}>
-        <Ionicons name="person-circle" size={28} color={colors.primary} />
-        <Text style={cardStyles.author}>{recipe.author}</Text>
-        <Ionicons
-          name="bookmark-outline"
-          size={20}
-          color={colors.secondary}
-          style={cardStyles.bookmarkIcon}
-        />
-      </View>
-
-      {/* Food Image */}
+    <Pressable style={cardStyles.card} onPress={handleViewDetail}>
+      {/* Foto resep dari URL yang diberikan API */}
       <Image source={{ uri: recipe.image }} style={cardStyles.image} />
 
-      {/* Judul + Deskripsi */}
-      <Text style={cardStyles.title}>{recipe.title}</Text>
-      <Text style={cardStyles.description} numberOfLines={2}>
-        {recipe.description}
-      </Text>
-
-      {/* Category, Cook Time, Difficulty */}
-      <View style={cardStyles.metaRow}>
-        <View style={cardStyles.metaItem}>
-          <Ionicons name="restaurant" size={14} color={colors.secondary} />
-          <Text style={cardStyles.metaText}>{recipe.category}</Text>
+      <View style={cardStyles.body}>
+        {/* Judul + tombol favorit */}
+        <View style={cardStyles.titleRow}>
+          <Text style={cardStyles.title} numberOfLines={2}>
+            {recipe.title}
+          </Text>
+          <Pressable
+            style={cardStyles.heartButton}
+            onPress={handleToggleFavorite}
+            hitSlop={8}
+          >
+            <Ionicons
+              name={isFav ? 'heart' : 'heart-outline'}
+              size={22}
+              color={colors.primary}
+            />
+          </Pressable>
         </View>
 
-        <View style={cardStyles.metaItem}>
-          <Ionicons name="time" size={14} color={colors.secondary} />
-          <Text style={cardStyles.metaText}>{formatTime(recipe.cookTime)}</Text>
+        {/* Chip kategori */}
+        <View style={cardStyles.chip}>
+          <Ionicons name="restaurant-outline" size={13} color={colors.sage} />
+          <Text style={cardStyles.chipText}>{recipe.category}</Text>
         </View>
-
-        {/*
-          INLINE STYLING
-          Warna difficulty berubah sesuai kondisi data:
-          Mudah -> hijau, selain itu -> oranye.
-        */}
-        <Text
-          style={{
-            color: recipe.difficulty === 'Mudah' ? 'green' : 'orange',
-            fontSize: 12,
-            fontWeight: 'bold',
-          }}
-        >
-          {recipe.difficulty}
-        </Text>
       </View>
-
-      {/* Action: Like + Lihat Resep */}
-      <View style={cardStyles.actionRow}>
-        <Pressable
-          style={cardStyles.likeButton}
-          onPress={handleLike}
-        >
-          {/* Icon berubah antara heart (filled) dan heart-outline sesuai status like */}
-          <Ionicons
-            name={isLiked ? 'heart' : 'heart-outline'}
-            size={18}
-            color={colors.primary}
-          />
-          <Text style={cardStyles.likeText}>{likeCount}</Text>
-        </Pressable>
-
-        <Pressable
-          style={cardStyles.detailButton}
-          onPress={handleViewDetail}
-        >
-          <Text style={cardStyles.detailButtonText}>Lihat Resep</Text>
-        </Pressable>
-      </View>
-    </View>
+    </Pressable>
   );
 }
 
-/**
- * EXTERNAL STYLING untuk RecipeCard
- */
 const cardStyles = StyleSheet.create({
   card: {
     backgroundColor: colors.card,
-    borderRadius: 16,
-    padding: 15,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
     marginBottom: 18,
-    elevation: 3,
-    shadowColor: '#000000',
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  authorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  author: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginLeft: 8,
-  },
-  bookmarkIcon: {
-    marginLeft: 'auto',
+    overflow: 'hidden',
+    ...cardShadow,
   },
   image: {
     width: '100%',
     height: 170,
-    borderRadius: 12,
-    marginBottom: 12,
-    backgroundColor: '#F0E4D8',
+    backgroundColor: colors.peach,
+  },
+  body: {
+    padding: 15,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
   },
   title: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    flex: 1,
+    fontSize: 17,
+    fontFamily: fonts.bodyBold,
     color: colors.text,
+    lineHeight: 23,
   },
-  description: {
-    fontSize: 14,
-    color: colors.secondary,
-    marginTop: 4,
-    marginBottom: 12,
+  heartButton: {
+    marginLeft: 10,
+    padding: 2,
   },
-  metaRow: {
+  chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 14,
-  },
-  metaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 14,
-  },
-  metaText: {
-    fontSize: 12,
-    color: colors.secondary,
-    marginLeft: 4,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  likeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-  },
-  likeText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginLeft: 6,
-  },
-  detailButton: {
-    backgroundColor: colors.primary,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+    alignSelf: 'flex-start',
+    backgroundColor: colors.sageLight,
     borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginTop: 10,
   },
-  detailButtonText: {
-    color: '#FFFFFF',
-    fontSize: 13,
-    fontWeight: 'bold',
+  chipText: {
+    fontSize: 12,
+    fontFamily: fonts.bodySemi,
+    color: colors.sage,
+    marginLeft: 5,
   },
 });
