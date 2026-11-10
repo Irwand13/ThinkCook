@@ -229,9 +229,7 @@ export default function HomeScreen() {
 
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <View style={styles.logoCircle}>
-            <Ionicons name="restaurant" size={22} color={colors.white} />
-          </View>
+          <Image source={require('../../../assets/logo/icon-1024.png')} style={styles.logoImage} />
           <Text style={styles.appName}>{APP_NAME}</Text>
         </View>
       </View>

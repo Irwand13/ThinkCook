@@ -49,13 +49,10 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  logoCircle: {
+  logoImage: {
     width: 42,
     height: 42,
-    borderRadius: 21,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 12,
     marginRight: 10,
   },
   appName: {
