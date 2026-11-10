@@ -12,7 +12,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#FFF8F0",
+        "backgroundColor": "#FAF3E7",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -24,7 +24,15 @@
       "bundler": "metro"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/logo/logo-lockup.png",
+          "imageWidth": 280,
+          "backgroundColor": "#FAF3E7"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
