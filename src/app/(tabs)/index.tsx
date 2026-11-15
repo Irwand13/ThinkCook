@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
@@ -14,9 +15,10 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ErrorMessage from '../../components/ErrorMessage';
-import Loading from '../../components/Loading';
 import RecipeCard from '../../components/RecipeCard';
-import { cardShadow, colors, fonts, styles } from '../../constants/styles';
+import { ListSkeleton, SkeletonBlock } from '../../components/Skeleton';
+import { cardShadow, colors, fonts, radius, spacing, styles } from '../../constants/styles';
+import { useResponsive } from '../../constants/responsive';
 import { getCategories, getRandomRecipe, getRecipes } from '../../services/recipeService';
 import { Recipe, RecipeSummary } from '../../types/recipe';
 
@@ -24,6 +26,7 @@ const APP_NAME = 'ThinkCook';
 
 export default function HomeScreen() {
   const [search, setSearch] = useState('');
+  const { columns, maxContentWidth, heroHeight } = useResponsive();
 
   const [heroRecipe, setHeroRecipe] = useState<Recipe | null>(null);
   const [heroLoading, setHeroLoading] = useState(true);
@@ -133,34 +136,61 @@ export default function HomeScreen() {
     <View>
       <Text style={styles.feedTitle}>Pilihan Hari Ini</Text>
       {heroLoading ? (
-        <Loading message="Mengambil resep pilihan..." />
+        <SkeletonBlock height={heroHeight} style={{ borderRadius: radius.xl }} />
       ) : heroRecipe ? (
         <Pressable
-          style={homeStyles.heroCard}
+          style={({ pressed }) => [
+            homeStyles.heroCard,
+            pressed && homeStyles.heroPressed,
+          ]}
           onPress={() =>
             router.push({
               pathname: '/recipes/[id]',
               params: { id: String(heroRecipe.id) },
             })
           }
+          accessibilityRole="button"
+          accessibilityLabel={`Buka detail resep ${heroRecipe.title}`}
         >
-          <Image source={{ uri: heroRecipe.image }} style={homeStyles.heroImage} />
-          <Pressable style={homeStyles.heroRefresh} onPress={loadHero} hitSlop={8}>
-            <Ionicons name="reload" size={18} color={colors.white} />
-          </Pressable>
-          <View style={homeStyles.heroBody}>
+          <Image
+            source={{ uri: heroRecipe.image }}
+            style={[homeStyles.heroImage, { height: heroHeight }]}
+            accessible={false}
+          />
+          <LinearGradient
+            colors={[
+              'rgba(43, 33, 24, 0)',
+              'rgba(43, 33, 24, 0.25)',
+              'rgba(43, 33, 24, 0.82)',
+            ]}
+            locations={[0, 0.45, 1]}
+            style={homeStyles.heroScrim}
+          />
+          <View style={homeStyles.heroOverlay}>
             <Text style={homeStyles.heroTitle} numberOfLines={2}>
               {heroRecipe.title}
             </Text>
             <View style={homeStyles.chipRow}>
-              <View style={homeStyles.chipPrimary}>
-                <Text style={homeStyles.chipPrimaryText}>{heroRecipe.category}</Text>
+              <View style={homeStyles.chipSolid}>
+                <Text style={homeStyles.chipSolidText}>{heroRecipe.category}</Text>
               </View>
-              <View style={homeStyles.chipSage}>
-                <Text style={homeStyles.chipSageText}>{heroRecipe.area}</Text>
+              <View style={homeStyles.chipSolid}>
+                <Text style={homeStyles.chipSolidText}>{heroRecipe.area}</Text>
               </View>
             </View>
           </View>
+          <Pressable
+            style={({ pressed }) => [
+              homeStyles.heroRefresh,
+              pressed && homeStyles.heroRefreshPressed,
+            ]}
+            onPress={loadHero}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Acak resep pilihan lain"
+          >
+            <Ionicons name="reload" size={20} color={colors.primary} />
+          </Pressable>
         </Pressable>
       ) : null}
 
@@ -174,15 +204,27 @@ export default function HomeScreen() {
           {categories.map((category) => (
             <Pressable
               key={category}
-              style={[
+              style={({ pressed }) => [
                 styles.categoryChip,
                 selectedCategory === category && styles.categoryChipActive,
+                pressed && homeStyles.chipPressed,
               ]}
               onPress={() => {
                 setFeedLoading(true);
                 setSelectedCategory(category);
               }}
+              accessibilityRole="button"
+              accessibilityLabel={`Filter kategori ${category}`}
+              accessibilityState={{ selected: selectedCategory === category }}
             >
+              {selectedCategory === category && (
+                <Ionicons
+                  name="checkmark"
+                  size={14}
+                  color={colors.white}
+                  style={{ marginRight: 4 }}
+                />
+              )}
               <Text
                 style={[
                   styles.categoryText,
@@ -205,7 +247,7 @@ export default function HomeScreen() {
 
   const renderEmpty = () => {
     if (feedLoading) {
-      return <Loading message="Memuat resep..." />;
+      return <ListSkeleton count={3} />;
     }
     if (feedError) {
       return (
@@ -217,8 +259,13 @@ export default function HomeScreen() {
     }
     return (
       <View style={styles.emptyState}>
-        <Ionicons name="restaurant-outline" size={44} color={colors.secondary} />
+        <View style={styles.emptyIconCircle}>
+          <Ionicons name="restaurant-outline" size={32} color={colors.primary} />
+        </View>
         <Text style={styles.emptyText}>Belum ada resep pada kategori ini</Text>
+        <Text style={styles.emptySubtext}>
+          Coba pilih kategori lain atau kembali lagi nanti.
+        </Text>
       </View>
     );
   };
@@ -244,9 +291,16 @@ export default function HomeScreen() {
           onChangeText={setSearch}
           onSubmitEditing={handleSearchSubmit}
           returnKeyType="search"
+          accessibilityLabel="Cari resep"
+          accessibilityHint="Ketik nama masakan, lalu tekan cari untuk membuka halaman pencarian"
         />
         {search.length > 0 && (
-          <Pressable style={styles.clearButton} onPress={() => setSearch('')}>
+          <Pressable
+            style={styles.clearButton}
+            onPress={() => setSearch('')}
+            accessibilityRole="button"
+            accessibilityLabel="Hapus pencarian"
+          >
             <Ionicons name="close-circle" size={20} color={colors.secondary} />
           </Pressable>
         )}
@@ -254,11 +308,19 @@ export default function HomeScreen() {
 
       <FlatList
         data={recipes}
+        key={columns === 2 ? 'grid-2' : 'list-1'}
+        numColumns={columns}
+        columnWrapperStyle={columns === 2 ? { gap: spacing.md } : undefined}
         keyExtractor={(item) => String(item.id)}
-        renderItem={({ item }) => <RecipeCard recipe={item} />}
+        renderItem={({ item }) => (
+          <RecipeCard recipe={item} variant={columns === 2 ? 'card' : 'row'} />
+        )}
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={renderEmpty}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          { maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' },
+        ]}
         showsVerticalScrollIndicator={false}
       />
     </SafeAreaView>
@@ -268,64 +330,75 @@ export default function HomeScreen() {
 const homeStyles = StyleSheet.create({
   heroCard: {
     backgroundColor: colors.card,
-    borderRadius: 20,
+    borderRadius: radius.xl,
     borderWidth: 1,
     borderColor: colors.border,
     overflow: 'hidden',
-    marginBottom: 20,
+    marginBottom: spacing.xl,
     ...cardShadow,
+  },
+  heroPressed: {
+    opacity: 0.94,
+    transform: [{ scale: 0.99 }],
   },
   heroImage: {
     width: '100%',
-    height: 190,
+    height: 220,
     backgroundColor: colors.peach,
+  },
+  heroScrim: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 150,
+  },
+  heroOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    padding: spacing.lg,
+  },
+  heroTitle: {
+    fontSize: 22,
+    fontFamily: fonts.heading,
+    color: colors.white,
+    lineHeight: 28,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    marginTop: spacing.sm,
+  },
+  chipSolid: {
+    backgroundColor: colors.sage,
+    borderRadius: radius.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginRight: spacing.sm,
+  },
+  chipSolidText: {
+    fontSize: 12,
+    fontFamily: fonts.bodySemi,
+    color: colors.white,
   },
   heroRefresh: {
     position: 'absolute',
     top: 12,
     right: 12,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.primary,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
+    ...cardShadow,
   },
-  heroBody: {
-    padding: 15,
+  heroRefreshPressed: {
+    transform: [{ scale: 0.92 }],
   },
-  heroTitle: {
-    fontSize: 20,
-    fontFamily: fonts.heading,
-    color: colors.text,
-    lineHeight: 26,
-  },
-  chipRow: {
-    flexDirection: 'row',
-    marginTop: 10,
-  },
-  chipPrimary: {
-    backgroundColor: colors.primaryLight,
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    marginRight: 8,
-  },
-  chipPrimaryText: {
-    fontSize: 12,
-    fontFamily: fonts.bodySemi,
-    color: colors.primary,
-  },
-  chipSage: {
-    backgroundColor: colors.sageLight,
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  chipSageText: {
-    fontSize: 12,
-    fontFamily: fonts.bodySemi,
-    color: colors.sage,
+  chipPressed: {
+    opacity: 0.85,
   },
   categoryBlock: {
     marginBottom: 6,

@@ -1,25 +1,58 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import { colors, fonts } from '../../constants/styles';
+import { StyleSheet, View } from 'react-native';
+import { colors, fonts, radius, shadows } from '../../constants/styles';
+
+type IoniconsName = keyof typeof Ionicons.glyphMap;
+
+function TabIcon({
+  focused,
+  activeName,
+  inactiveName,
+}: {
+  focused: boolean;
+  activeName: IoniconsName;
+  inactiveName: IoniconsName;
+}) {
+  return (
+    <View style={[tabStyles.iconWrap, focused && tabStyles.iconWrapActive]}>
+      <Ionicons
+        name={focused ? activeName : inactiveName}
+        size={22}
+        color={focused ? colors.white : colors.secondary}
+      />
+    </View>
+  );
+}
 
 export default function TabsLayout() {
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.primary,
+        tabBarActiveTintColor: colors.primaryDark,
         tabBarInactiveTintColor: colors.secondary,
+        tabBarHideOnKeyboard: true,
         tabBarStyle: {
-          backgroundColor: colors.background,
-          borderTopColor: colors.border,
-          borderTopWidth: 1,
-          height: 60,
-          paddingTop: 6,
+          position: 'absolute',
+          left: 20,
+          right: 20,
+          bottom: 16,
+          height: 68,
+          borderRadius: radius.xl,
+          backgroundColor: colors.card,
+          borderTopWidth: 0,
+          paddingTop: 8,
           paddingBottom: 8,
+          ...shadows.floating,
+        },
+        tabBarItemStyle: {
+          paddingVertical: 4,
         },
         tabBarLabelStyle: {
           fontFamily: fonts.bodySemi,
           fontSize: 11,
+          marginTop: 3,
         },
       }}
     >
@@ -27,8 +60,13 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: 'Beranda',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
+          tabBarAccessibilityLabel: 'Tab Beranda',
+          tabBarIcon: ({ focused }) => (
+            <TabIcon
+              focused={focused}
+              activeName="home"
+              inactiveName="home-outline"
+            />
           ),
         }}
       />
@@ -36,8 +74,13 @@ export default function TabsLayout() {
         name="search"
         options={{
           title: 'Cari',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="search-outline" size={size} color={color} />
+          tabBarAccessibilityLabel: 'Tab Cari',
+          tabBarIcon: ({ focused }) => (
+            <TabIcon
+              focused={focused}
+              activeName="search"
+              inactiveName="search-outline"
+            />
           ),
         }}
       />
@@ -45,8 +88,13 @@ export default function TabsLayout() {
         name="favorite"
         options={{
           title: 'Favorit',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="heart-outline" size={size} color={color} />
+          tabBarAccessibilityLabel: 'Tab Favorit',
+          tabBarIcon: ({ focused }) => (
+            <TabIcon
+              focused={focused}
+              activeName="heart"
+              inactiveName="heart-outline"
+            />
           ),
         }}
       />
@@ -54,11 +102,29 @@ export default function TabsLayout() {
         name="profile"
         options={{
           title: 'Profil',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
+          tabBarAccessibilityLabel: 'Tab Profil',
+          tabBarIcon: ({ focused }) => (
+            <TabIcon
+              focused={focused}
+              activeName="person"
+              inactiveName="person-outline"
+            />
           ),
         }}
       />
     </Tabs>
   );
 }
+
+const tabStyles = StyleSheet.create({
+  iconWrap: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconWrapActive: {
+    backgroundColor: colors.primary,
+  },
+});
