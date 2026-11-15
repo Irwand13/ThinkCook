@@ -1,0 +1,231 @@
+{
+  "ok": true,
+  "pdf": "/home/hatch/workspace/ThinkCook/docs/srs-v1.1/SRS-ThinkCook-v1.1.pdf",
+  "pages": 0,
+  "pngs": [],
+  "fonts": {
+    "missing": [],
+    "unused": [],
+    "used": [
+      "Liberation Sans",
+      "Liberation Serif"
+    ],
+    "expected": [
+      "Liberation Sans:400",
+      "Liberation Sans:700",
+      "Liberation Serif:700"
+    ]
+  },
+  "overflow": [],
+  "text_floor": [
+    {
+      "index": 0,
+      "runs": [
+        {
+          "pt": 9,
+          "chars": 1,
+          "max_node_chars": 1,
+          "sample": "1"
+        },
+        {
+          "pt": 9.5,
+          "chars": 11,
+          "max_node_chars": 7,
+          "sample": "Istilah"
+        },
+        {
+          "pt": 10,
+          "chars": 413,
+          "max_node_chars": 115,
+          "sample": "Disusun oleh:"
+        },
+        {
+          "pt": 10.5,
+          "chars": 695,
+          "max_node_chars": 303,
+          "sample": "Versi 1.1 memperbaiki versi 1.0 sesudah "
+        },
+        {
+          "pt": 11,
+          "chars": 34,
+          "max_node_chars": 15,
+          "sample": "1.1 Tujuan"
+        },
+        {
+          "pt": 12,
+          "chars": 43,
+          "max_node_chars": 43,
+          "sample": "ThinkCook: Aplikasi Mobile Berbagi Resep"
+        },
+        {
+          "pt": 14,
+          "chars": 26,
+          "max_node_chars": 13,
+          "sample": "Riwayat Revisi"
+        },
+        {
+          "pt": 22,
+          "chars": 39,
+          "max_node_chars": 39,
+          "sample": "Spesifikasi Kebutuhan Perangkat Lunak (S"
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "runs": [
+        {
+          "pt": 9,
+          "chars": 1,
+          "max_node_chars": 1,
+          "sample": "2"
+        },
+        {
+          "pt": 9.5,
+          "chars": 16,
+          "max_node_chars": 9,
+          "sample": "ID"
+        },
+        {
+          "pt": 10,
+          "chars": 769,
+          "max_node_chars": 122,
+          "sample": "FR-01"
+        },
+        {
+          "pt": 10.5,
+          "chars": 390,
+          "max_node_chars": 155,
+          "sample": "Produk:"
+        },
+        {
+          "pt": 14,
+          "chars": 35,
+          "max_node_chars": 21,
+          "sample": "2. Gambaran Umum"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "runs": [
+        {
+          "pt": 9,
+          "chars": 1,
+          "max_node_chars": 1,
+          "sample": "3"
+        },
+        {
+          "pt": 9.5,
+          "chars": 16,
+          "max_node_chars": 9,
+          "sample": "ID"
+        },
+        {
+          "pt": 10,
+          "chars": 987,
+          "max_node_chars": 202,
+          "sample": "FR-09"
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "runs": [
+        {
+          "pt": 9,
+          "chars": 1,
+          "max_node_chars": 1,
+          "sample": "4"
+        },
+        {
+          "pt": 9.5,
+          "chars": 31,
+          "max_node_chars": 10,
+          "sample": "Layar"
+        },
+        {
+          "pt": 10,
+          "chars": 1004,
+          "max_node_chars": 112,
+          "sample": "Beranda"
+        },
+        {
+          "pt": 10.5,
+          "chars": 256,
+          "max_node_chars": 256,
+          "sample": "Desain dibuat di Figma dan terdiri dari "
+        },
+        {
+          "pt": 14,
+          "chars": 45,
+          "max_node_chars": 25,
+          "sample": "4. Rancangan Antarmuka"
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "runs": [
+        {
+          "pt": 9,
+          "chars": 1,
+          "max_node_chars": 1,
+          "sample": "5"
+        },
+        {
+          "pt": 9.5,
+          "chars": 16,
+          "max_node_chars": 9,
+          "sample": "ID"
+        },
+        {
+          "pt": 10,
+          "chars": 810,
+          "max_node_chars": 211,
+          "sample": "NFR-09"
+        },
+        {
+          "pt": 10.5,
+          "chars": 849,
+          "max_node_chars": 227,
+          "sample": "Aplikasi memakai lima endpoint TheMealDB"
+        },
+        {
+          "pt": 14,
+          "chars": 41,
+          "max_node_chars": 29,
+          "sample": "6. Data dan API"
+        }
+      ]
+    }
+  ],
+  "image_resolution": [
+    {
+      "index": 0,
+      "images": []
+    },
+    {
+      "index": 1,
+      "images": []
+    },
+    {
+      "index": 2,
+      "images": []
+    },
+    {
+      "index": 3,
+      "images": []
+    },
+    {
+      "index": 4,
+      "images": []
+    }
+  ],
+  "geometry": {
+    "failures": [],
+    "advisories": []
+  },
+  "gate_failures": [],
+  "advisories": []
+}

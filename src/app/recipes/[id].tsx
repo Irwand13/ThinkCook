@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import {
   Image,
@@ -10,16 +11,20 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ErrorMessage from '../../components/ErrorMessage';
-import Loading from '../../components/Loading';
+import { DetailSkeleton } from '../../components/Skeleton';
 import StatCard from '../../components/StatCard';
-import { cardShadow, colors, fonts } from '../../constants/styles';
+import { cardShadow, colors, fonts, radius, spacing, type } from '../../constants/styles';
+import { useResponsive } from '../../constants/responsive';
 import { isFavorite, toggleFavorite } from '../../services/favoriteService';
 import { getRecipeById } from '../../services/recipeService';
 import { Recipe } from '../../types/recipe';
 
 export default function RecipeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const insets = useSafeAreaInsets();
+  const { detailImageHeight, maxContentWidth } = useResponsive();
 
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
@@ -120,7 +125,8 @@ export default function RecipeDetailScreen() {
   if (loading) {
     return (
       <View style={detailStyles.statusContainer}>
-        <Loading message="Memuat detail resep..." />
+        <StatusBar style="dark" />
+        <DetailSkeleton />
       </View>
     );
   }
@@ -128,6 +134,7 @@ export default function RecipeDetailScreen() {
   if (error || !recipe) {
     return (
       <View style={detailStyles.statusContainer}>
+        <StatusBar style="dark" />
         <ErrorMessage
           message={error ?? 'Resep tidak ditemukan'}
           onRetry={loadRecipe}
@@ -146,14 +153,68 @@ export default function RecipeDetailScreen() {
     .map((step) => step.replace(/^\s*(STEP\s*)?\d+[.)]?\s*/i, '').trim())
     .filter((step) => step.length > 3 && !/^step\s*\d+$/i.test(step));
 
+  const ingredientPct =
+    recipe.ingredients.length === 0
+      ? 0
+      : Math.round(
+          (checkedIngredients.length / recipe.ingredients.length) * 100,
+        );
+  const stepPct =
+    steps.length === 0
+      ? 0
+      : Math.round((doneSteps.length / steps.length) * 100);
+
   return (
     <ScrollView
       style={detailStyles.container}
       showsVerticalScrollIndicator={false}
     >
-      <Image source={{ uri: recipe.image }} style={detailStyles.image} />
+      <StatusBar style="light" />
+      <Image
+        source={{ uri: recipe.image }}
+        style={[detailStyles.image, { height: detailImageHeight }]}
+        accessible={false}
+      />
 
-      <View style={detailStyles.content}>
+      <View style={[detailStyles.overlayBar, { top: insets.top + 12 }]}>
+        <Pressable
+          style={({ pressed }) => [
+            detailStyles.overlayButton,
+            pressed && detailStyles.overlayPressed,
+          ]}
+          onPress={handleGoBack}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Kembali"
+        >
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
+        </Pressable>
+        <Pressable
+          style={({ pressed }) => [
+            detailStyles.overlayButton,
+            pressed && detailStyles.overlayPressed,
+          ]}
+          onPress={handleToggleFavorite}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={
+            isFav ? 'Hapus dari favorit' : 'Simpan ke favorit'
+          }
+        >
+          <Ionicons
+            name={isFav ? 'heart' : 'heart-outline'}
+            size={22}
+            color={colors.primary}
+          />
+        </Pressable>
+      </View>
+
+      <View
+        style={[
+          detailStyles.content,
+          { maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' },
+        ]}
+      >
         <Text style={detailStyles.title}>{recipe.title}</Text>
 
         <View style={detailStyles.chipRow}>
@@ -169,20 +230,6 @@ export default function RecipeDetailScreen() {
             </View>
           ))}
         </View>
-
-        <Pressable
-          style={detailStyles.favoriteButton}
-          onPress={handleToggleFavorite}
-        >
-          <Ionicons
-            name={isFav ? 'heart' : 'heart-outline'}
-            size={21}
-            color={colors.primary}
-          />
-          <Text style={detailStyles.favoriteText}>
-            {isFav ? 'Tersimpan di Favorit' : 'Simpan ke Favorit'}
-          </Text>
-        </Pressable>
 
         <View style={detailStyles.statRow}>
           <StatCard
@@ -203,22 +250,47 @@ export default function RecipeDetailScreen() {
           Ketuk bahan untuk menandai yang sudah kamu siapkan.
         </Text>
         <View style={detailStyles.listCard}>
+          <View style={detailStyles.progressBlock}>
+            <View style={detailStyles.progressLabelRow}>
+              <Text style={detailStyles.progressLabel}>
+                {checkedIngredients.length} dari {recipe.ingredients.length} bahan siap
+              </Text>
+              <Text style={detailStyles.progressLabel}>{ingredientPct}%</Text>
+            </View>
+            <View
+              style={detailStyles.progressTrack}
+              accessibilityRole="progressbar"
+              accessibilityLabel="Bahan siap"
+              accessibilityValue={{ min: 0, max: 100, now: ingredientPct }}
+            >
+              <View
+                style={[
+                  detailStyles.progressFill,
+                  { width: `${ingredientPct}%`, backgroundColor: colors.primary },
+                ]}
+              />
+            </View>
+          </View>
           {recipe.ingredients.map((ingredient, index) => {
             const checked = checkedIngredients.includes(index);
             return (
               <Pressable
                 key={`${ingredient.name}-${index}`}
-                style={[
+                style={({ pressed }) => [
                   detailStyles.ingredientRow,
                   index < recipe.ingredients.length - 1 &&
                     detailStyles.rowDivider,
+                  pressed && detailStyles.rowPressed,
                 ]}
                 onPress={() => toggleIngredient(index)}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked }}
+                accessibilityLabel={`Bahan ${ingredient.name}, ${ingredient.measure}, ${checked ? 'sudah disiapkan' : 'belum disiapkan'}`}
               >
                 <Ionicons
-                  name={checked ? 'checkbox' : 'square-outline'}
-                  size={22}
-                  color={checked ? colors.sage : colors.secondary}
+                  name={checked ? 'checkmark-circle' : 'ellipse-outline'}
+                  size={24}
+                  color={checked ? colors.primaryDark : colors.secondary}
                 />
                 <Text
                   style={[
@@ -236,16 +308,51 @@ export default function RecipeDetailScreen() {
           })}
         </View>
 
+        <Pressable
+          style={({ pressed }) => [
+            detailStyles.cookButton,
+            cookingMode && detailStyles.cookButtonActive,
+            pressed && detailStyles.buttonPressed,
+          ]}
+          onPress={() => setCookingMode((prev) => !prev)}
+          accessibilityRole="button"
+          accessibilityLabel={
+            cookingMode ? 'Selesai Memasak' : 'Mulai Mode Masak'
+          }
+        >
+          <Ionicons
+            name={cookingMode ? 'checkmark' : 'flame'}
+            size={19}
+            color={colors.white}
+          />
+          <Text style={detailStyles.cookButtonText}>
+            {cookingMode ? 'Selesai Memasak' : 'Mulai Mode Masak'}
+          </Text>
+        </Pressable>
+
         <View style={detailStyles.sectionHeaderRow}>
           <Text style={detailStyles.sectionTitle}>Cara Membuat</Text>
           <Text style={detailStyles.progressText}>
             {doneSteps.length}/{steps.length} langkah selesai
           </Text>
         </View>
+        <View
+          style={[detailStyles.progressTrack, detailStyles.stepsTrack]}
+          accessibilityRole="progressbar"
+          accessibilityLabel="Langkah selesai"
+          accessibilityValue={{ min: 0, max: 100, now: stepPct }}
+        >
+          <View
+            style={[
+              detailStyles.progressFill,
+              { width: `${stepPct}%`, backgroundColor: colors.sage },
+            ]}
+          />
+        </View>
 
         {cookingMode && (
           <View style={detailStyles.cookingBanner}>
-            <Ionicons name="flame-outline" size={19} color={colors.sage} />
+            <Ionicons name="flame-outline" size={19} color={colors.sageText} />
             <Text style={detailStyles.cookingBannerText}>
               Mode masak aktif — tandai langkah yang sudah selesai.
             </Text>
@@ -257,8 +364,14 @@ export default function RecipeDetailScreen() {
           return (
             <Pressable
               key={index}
-              style={detailStyles.stepRow}
+              style={({ pressed }) => [
+                detailStyles.stepRow,
+                pressed && detailStyles.rowPressed,
+              ]}
               onPress={() => toggleStep(index)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: done }}
+              accessibilityLabel={`Langkah ${index + 1}${done ? ', selesai' : ''}: ${step}`}
             >
               <View
                 style={[
@@ -284,31 +397,34 @@ export default function RecipeDetailScreen() {
           );
         })}
 
-        {!cookingMode && (
-          <Pressable
-            style={detailStyles.cookButton}
-            onPress={() => setCookingMode(true)}
-          >
-            <Ionicons name="flame" size={19} color={colors.white} />
-            <Text style={detailStyles.cookButtonText}>Mulai Masak</Text>
-          </Pressable>
-        )}
-
         {recipe.youtube ? (
           <Pressable
-            style={detailStyles.youtubeButton}
+            style={({ pressed }) => [
+              detailStyles.youtubeButton,
+              pressed && detailStyles.buttonPressed,
+            ]}
             onPress={() => {
               if (recipe.youtube) {
                 Linking.openURL(recipe.youtube);
               }
             }}
+            accessibilityRole="button"
+            accessibilityLabel="Tonton di YouTube"
           >
-            <Ionicons name="logo-youtube" size={20} color={colors.primary} />
+            <Ionicons name="logo-youtube" size={20} color={colors.primaryDark} />
             <Text style={detailStyles.youtubeText}>Tonton di YouTube</Text>
           </Pressable>
         ) : null}
 
-        <Pressable style={detailStyles.backButton} onPress={handleGoBack}>
+        <Pressable
+          style={({ pressed }) => [
+            detailStyles.backButton,
+            pressed && detailStyles.buttonPressed,
+          ]}
+          onPress={handleGoBack}
+          accessibilityRole="button"
+          accessibilityLabel="Kembali"
+        >
           <Ionicons name="arrow-back" size={18} color={colors.white} />
           <Text style={detailStyles.backButtonText}>Kembali</Text>
         </Pressable>
@@ -330,91 +446,90 @@ const detailStyles = StyleSheet.create({
   },
   image: {
     width: '100%',
-    height: 260,
+    height: 300,
     backgroundColor: colors.peach,
   },
+  overlayBar: {
+    position: 'absolute',
+    left: spacing.lg,
+    right: spacing.lg,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    zIndex: 2,
+  },
+  overlayButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...cardShadow,
+  },
+  overlayPressed: {
+    transform: [{ scale: 0.92 }],
+  },
   content: {
-    padding: 20,
+    padding: spacing.xl,
   },
   title: {
-    fontSize: 26,
-    fontFamily: fonts.heading,
+    ...type.display,
     color: colors.text,
-    lineHeight: 33,
   },
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 12,
+    marginTop: spacing.md,
   },
   chipPrimary: {
-    backgroundColor: colors.primaryLight,
-    borderRadius: 12,
+    backgroundColor: colors.primaryDark,
+    borderRadius: radius.pill,
     paddingHorizontal: 11,
     paddingVertical: 5,
-    marginRight: 8,
-    marginBottom: 8,
+    marginRight: spacing.sm,
+    marginBottom: spacing.sm,
   },
   chipPrimaryText: {
     fontSize: 12,
     fontFamily: fonts.bodySemi,
-    color: colors.primary,
+    color: colors.white,
   },
   chipSage: {
-    backgroundColor: colors.sageLight,
-    borderRadius: 12,
+    backgroundColor: colors.sage,
+    borderRadius: radius.pill,
     paddingHorizontal: 11,
     paddingVertical: 5,
-    marginRight: 8,
-    marginBottom: 8,
+    marginRight: spacing.sm,
+    marginBottom: spacing.sm,
   },
   chipSageText: {
     fontSize: 12,
     fontFamily: fonts.bodySemi,
-    color: colors.sage,
+    color: colors.white,
   },
   chipOutline: {
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.card,
-    borderRadius: 12,
+    borderRadius: radius.pill,
     paddingHorizontal: 11,
     paddingVertical: 5,
-    marginRight: 8,
-    marginBottom: 8,
+    marginRight: spacing.sm,
+    marginBottom: spacing.sm,
   },
   chipOutlineText: {
     fontSize: 12,
     fontFamily: fonts.bodySemi,
     color: colors.secondary,
   },
-  favoriteButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 14,
-    paddingVertical: 9,
-    paddingHorizontal: 14,
-    marginTop: 6,
-  },
-  favoriteText: {
-    fontSize: 14,
-    fontFamily: fonts.bodySemi,
-    color: colors.text,
-    marginLeft: 8,
-  },
   statRow: {
     flexDirection: 'row',
     gap: 10,
-    marginTop: 18,
+    marginTop: spacing.lg,
     marginBottom: 6,
   },
   sectionTitle: {
-    fontSize: 19,
-    fontFamily: fonts.headingSemi,
+    ...type.section,
     color: colors.text,
     marginTop: 22,
     marginBottom: 6,
@@ -433,11 +548,42 @@ const detailStyles = StyleSheet.create({
   progressText: {
     fontSize: 13,
     fontFamily: fonts.bodySemi,
-    color: colors.sage,
+    color: colors.sageText,
+  },
+  progressBlock: {
+    paddingTop: 14,
+    paddingBottom: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  progressLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  progressLabel: {
+    fontSize: 13,
+    fontFamily: fonts.bodySemi,
+    color: colors.text,
+  },
+  progressTrack: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.border,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  stepsTrack: {
+    marginTop: 2,
+    marginBottom: 14,
   },
   listCard: {
     backgroundColor: colors.card,
-    borderRadius: 18,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
     paddingHorizontal: 14,
@@ -451,6 +597,9 @@ const detailStyles = StyleSheet.create({
   rowDivider: {
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+  },
+  rowPressed: {
+    opacity: 0.7,
   },
   ingredientName: {
     flex: 1,
@@ -474,7 +623,7 @@ const detailStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: colors.sageLight,
-    borderRadius: 14,
+    borderRadius: radius.md,
     paddingVertical: 11,
     paddingHorizontal: 14,
     marginBottom: 14,
@@ -483,7 +632,7 @@ const detailStyles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     fontFamily: fonts.bodySemi,
-    color: colors.sage,
+    color: colors.sageText,
     marginLeft: 8,
   },
   stepRow: {
@@ -520,10 +669,17 @@ const detailStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: 16,
+    backgroundColor: colors.primaryDark,
+    borderRadius: radius.lg,
     paddingVertical: 15,
-    marginTop: 10,
+    marginTop: 14,
+  },
+  cookButtonActive: {
+    backgroundColor: colors.sage,
+  },
+  buttonPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
   },
   cookButtonText: {
     color: colors.white,
@@ -537,13 +693,13 @@ const detailStyles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: colors.card,
     borderWidth: 1,
-    borderColor: colors.primary,
-    borderRadius: 16,
+    borderColor: colors.primaryDark,
+    borderRadius: radius.lg,
     paddingVertical: 13,
     marginTop: 12,
   },
   youtubeText: {
-    color: colors.primary,
+    color: colors.primaryDark,
     fontSize: 15,
     fontFamily: fonts.bodyBold,
     marginLeft: 8,
@@ -552,9 +708,9 @@ const detailStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryDark,
     paddingVertical: 14,
-    borderRadius: 16,
+    borderRadius: radius.lg,
     marginTop: 22,
     marginBottom: 30,
   },

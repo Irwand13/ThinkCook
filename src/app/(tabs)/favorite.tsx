@@ -1,18 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useState } from 'react';
-import { FlatList, Text, View } from 'react-native';
+import { FlatList, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Loading from '../../components/Loading';
 import RecipeCard from '../../components/RecipeCard';
-import { colors, styles } from '../../constants/styles';
+import { ListSkeleton } from '../../components/Skeleton';
+import { colors, spacing, styles } from '../../constants/styles';
+import { useResponsive } from '../../constants/responsive';
 import { getFavorites } from '../../services/favoriteService';
 import { RecipeSummary } from '../../types/recipe';
 
 export default function FavoriteScreen() {
   const [favorites, setFavorites] = useState<RecipeSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const { columns, maxContentWidth } = useResponsive();
 
   useFocusEffect(
     useCallback(() => {
@@ -41,21 +43,42 @@ export default function FavoriteScreen() {
       </Text>
 
       {loading ? (
-        <Loading message="Memuat favorit..." />
+        <ListSkeleton count={2} />
       ) : favorites.length === 0 ? (
         <View style={styles.emptyState}>
-          <Ionicons name="heart-outline" size={48} color={colors.secondary} />
+          <View style={styles.emptyIconCircle}>
+            <Ionicons name="heart-outline" size={32} color={colors.primary} />
+          </View>
           <Text style={styles.emptyText}>Belum ada resep favorit</Text>
           <Text style={styles.emptySubtext}>
             Tekan ikon hati pada resep mana pun untuk menyimpannya di sini.
           </Text>
+          <Pressable
+            style={({ pressed }) => [
+              styles.emptyAction,
+              pressed && { opacity: 0.85 },
+            ]}
+            onPress={() => router.push('/')}
+            accessibilityRole="button"
+            accessibilityLabel="Jelajahi resep"
+          >
+            <Text style={styles.emptyActionText}>Jelajahi Resep</Text>
+          </Pressable>
         </View>
       ) : (
         <FlatList
           data={favorites}
+          key={columns === 2 ? 'grid-2' : 'list-1'}
+          numColumns={columns}
+          columnWrapperStyle={columns === 2 ? { gap: spacing.md } : undefined}
           keyExtractor={(item) => String(item.id)}
-          renderItem={({ item }) => <RecipeCard recipe={item} />}
-          contentContainerStyle={styles.listContent}
+          renderItem={({ item }) => (
+            <RecipeCard recipe={item} variant="card" />
+          )}
+          contentContainerStyle={[
+            styles.listContent,
+            { maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' },
+          ]}
           showsVerticalScrollIndicator={false}
         />
       )}

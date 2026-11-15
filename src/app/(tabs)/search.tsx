@@ -5,14 +5,16 @@ import { useEffect, useState } from 'react';
 import { FlatList, Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ErrorMessage from '../../components/ErrorMessage';
-import Loading from '../../components/Loading';
 import RecipeCard from '../../components/RecipeCard';
-import { colors, styles } from '../../constants/styles';
+import { ListSkeleton } from '../../components/Skeleton';
+import { colors, spacing, styles } from '../../constants/styles';
+import { useResponsive } from '../../constants/responsive';
 import { searchRecipes } from '../../services/recipeService';
 import { RecipeSummary } from '../../types/recipe';
 
 export default function SearchScreen() {
   const { q } = useLocalSearchParams<{ q?: string }>();
+  const { columns, maxContentWidth } = useResponsive();
 
   const [query, setQuery] = useState(q ?? '');
 
@@ -60,7 +62,7 @@ export default function SearchScreen() {
 
   const renderContent = () => {
     if (loading) {
-      return <Loading message={`Mencari "${activeKeyword}"...`} />;
+      return <ListSkeleton count={2} />;
     }
     if (error && activeKeyword.length > 0) {
       return (
@@ -73,7 +75,9 @@ export default function SearchScreen() {
     if (activeKeyword.length === 0 || !hasSearched) {
       return (
         <View style={styles.emptyState}>
-          <Ionicons name="search-outline" size={46} color={colors.secondary} />
+          <View style={styles.emptyIconCircle}>
+            <Ionicons name="search-outline" size={32} color={colors.primary} />
+          </View>
           <Text style={styles.emptyText}>Cari resep dari TheMealDB</Text>
           <Text style={styles.emptySubtext}>
             {'Ketik nama masakan dalam bahasa Inggris, misalnya "chicken", "cake", atau "pasta".'}
@@ -84,26 +88,48 @@ export default function SearchScreen() {
     if (results.length === 0) {
       return (
         <View style={styles.emptyState}>
-          <Ionicons
-            name="restaurant-outline"
-            size={46}
-            color={colors.secondary}
-          />
+          <View style={styles.emptyIconCircle}>
+            <Ionicons name="restaurant-outline" size={32} color={colors.primary} />
+          </View>
           <Text style={styles.emptyText}>
             {`Tidak ada hasil untuk "${activeKeyword}"`}
           </Text>
           <Text style={styles.emptySubtext}>
             Coba kata kunci lain yang lebih umum.
           </Text>
+          <Pressable
+            style={({ pressed }) => [
+              styles.emptyAction,
+              pressed && { opacity: 0.85 },
+            ]}
+            onPress={() => setQuery('')}
+            accessibilityRole="button"
+            accessibilityLabel="Hapus pencarian"
+          >
+            <Text style={styles.emptyActionText}>Hapus Pencarian</Text>
+          </Pressable>
         </View>
       );
     }
     return (
       <FlatList
         data={results}
+        key={columns === 2 ? 'grid-2' : 'list-1'}
+        numColumns={columns}
+        columnWrapperStyle={columns === 2 ? { gap: spacing.md } : undefined}
         keyExtractor={(item) => String(item.id)}
-        renderItem={({ item }) => <RecipeCard recipe={item} />}
-        contentContainerStyle={styles.listContent}
+        renderItem={({ item }) => (
+          <RecipeCard recipe={item} variant={columns === 2 ? 'card' : 'row'} />
+        )}
+        ListHeaderComponent={
+          <Text style={styles.resultCount}>
+            {results.length} resep ditemukan untuk &ldquo;{activeKeyword}&rdquo;
+          </Text>
+        }
+        contentContainerStyle={[
+          styles.listContent,
+          { maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' },
+        ]}
         showsVerticalScrollIndicator={false}
       />
     );
@@ -128,9 +154,16 @@ export default function SearchScreen() {
           onChangeText={setQuery}
           autoFocus
           returnKeyType="search"
+          accessibilityLabel="Cari resep"
+          accessibilityHint="Ketik nama masakan, hasil muncul otomatis"
         />
         {query.length > 0 && (
-          <Pressable style={styles.clearButton} onPress={() => setQuery('')}>
+          <Pressable
+            style={styles.clearButton}
+            onPress={() => setQuery('')}
+            accessibilityRole="button"
+            accessibilityLabel="Hapus pencarian"
+          >
             <Ionicons name="close-circle" size={20} color={colors.secondary} />
           </Pressable>
         )}

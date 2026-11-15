@@ -1,5 +1,6 @@
 import {
   Fraunces_600SemiBold,
+  Fraunces_600SemiBold_Italic,
   Fraunces_700Bold,
 } from '@expo-google-fonts/fraunces';
 import {
@@ -8,20 +9,57 @@ import {
   PlusJakartaSans_700Bold,
 } from '@expo-google-fonts/plus-jakarta-sans';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { router, Stack, useRootNavigationState, useSegments } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { colors } from '../constants/styles';
+import { getSessionUser } from '../services/authService';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
     Fraunces_600SemiBold,
+    Fraunces_600SemiBold_Italic,
     Fraunces_700Bold,
     PlusJakartaSans_400Regular,
     PlusJakartaSans_600SemiBold,
     PlusJakartaSans_700Bold,
   });
+  const [checking, setChecking] = useState(true);
+  const segments = useSegments();
+  const rootNav = useRootNavigationState();
 
-  if (!fontsLoaded) {
+  useEffect(() => {
+    if (!rootNav?.key) {
+      return;
+    }
+    let aktif = true;
+
+    getSessionUser()
+      .then((sessionUser) => {
+        if (!aktif) {
+          return;
+        }
+        setChecking(false);
+
+        const inLogin = segments[0] === 'login';
+        if (!sessionUser && !inLogin) {
+          router.replace('/login');
+        } else if (sessionUser && inLogin) {
+          router.replace('/(tabs)');
+        }
+      })
+      .catch(() => {
+        if (aktif) {
+          setChecking(false);
+        }
+      });
+
+    return () => {
+      aktif = false;
+    };
+  }, [segments, rootNav?.key]);
+
+  if (!fontsLoaded || checking) {
     return (
       <View
         style={{
@@ -38,18 +76,13 @@ export default function RootLayout() {
 
   return (
     <Stack>
+      <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
       <Stack.Screen
         name="recipes/[id]"
         options={{
-          title: 'Detail Resep',
-          headerStyle: { backgroundColor: colors.background },
-          headerTintColor: colors.primary,
-          headerTitleStyle: {
-            fontFamily: 'PlusJakartaSans_700Bold',
-            color: colors.text,
-          },
+          headerShown: false,
         }}
       />
     </Stack>

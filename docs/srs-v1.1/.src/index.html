@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SRS ThinkCook v1.1</title>
+<style>
+@page { size: A4; margin: 0; }
+* { box-sizing: border-box; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+body { margin: 0; font-family: 'Liberation Sans', 'Noto Sans', sans-serif; font-size: 10.5pt; line-height: 1.5; color: #2B2118; }
+.page { min-height: 297mm; padding: 18mm 20mm; display: flow-root; }
+h1 { font-family: 'Liberation Serif', 'Noto Serif', serif; font-size: 22pt; line-height: 1.2; margin: 0 0 4mm 0; color: #2B2118; }
+h2 { font-family: 'Liberation Serif', 'Noto Serif', serif; font-size: 14pt; margin: 7mm 0 3mm 0; color: #C7431F; border-bottom: 1px solid #EFE3D3; padding-bottom: 1.5mm; }
+h3 { font-size: 11pt; margin: 5mm 0 2mm 0; color: #2B2118; }
+p { margin: 0 0 3mm 0; }
+.subtitle { font-size: 12pt; color: #6B5B4A; margin-bottom: 2mm; }
+.meta { font-size: 10pt; color: #6B5B4A; margin-bottom: 6mm; }
+.meta b { color: #2B2118; }
+.accent { height: 2mm; background: #E4572E; border-radius: 1mm; margin-bottom: 7mm; }
+table { width: 100%; border-collapse: collapse; margin: 2mm 0 4mm 0; font-size: 10pt; line-height: 1.45; }
+thead { display: table-header-group; }
+th { background: #FBE7DD; color: #2B2118; text-align: left; padding: 2mm 2.5mm; border: 1px solid #EFE3D3; font-size: 9.5pt; }
+td { padding: 2mm 2.5mm; border: 1px solid #EFE3D3; vertical-align: top; }
+tr { break-inside: avoid; page-break-inside: avoid; }
+td.id { white-space: nowrap; font-weight: bold; }
+ul { margin: 0 0 3mm 0; padding-left: 6mm; }
+li { margin-bottom: 1.5mm; }
+.note { background: #E9EEDF; border-left: 3mm solid #647C4E; padding: 3mm 4mm; margin: 3mm 0 4mm 0; font-size: 10pt; }
+.pageno { margin-top: 8mm; font-size: 9pt; color: #6B5B4A; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="page">
+<div class="accent"></div>
+<h1>Spesifikasi Kebutuhan Perangkat Lunak (SRS)</h1>
+<p class="subtitle">ThinkCook: Aplikasi Mobile Berbagi Resep Masakan</p>
+<p class="meta">Disusun oleh: <b>Irwanda</b> &nbsp;|&nbsp; Versi <b>1.1</b> &nbsp;|&nbsp; 14 November 2026</p>
+
+<h2>Riwayat Revisi</h2>
+<p>Versi 1.1 memperbaiki versi 1.0 sesudah dicek terhadap kode aplikasi:
+FR-02 dan FR-10 disesuaikan dengan perilaku aplikasi; ditambah FR-15, FR-16,
+dan NFR-14 untuk autentikasi; NFR-11 dan Bagian 6 diperjelas; Bagian 7
+ditulis ulang dan kontras teks dicatat sebagai terverifikasi.</p>
+
+<h2>1. Pendahuluan</h2>
+<h3>1.1 Tujuan</h3>
+<p>Dokumen ini menjelaskan apa saja yang harus bisa dilakukan aplikasi
+ThinkCook dan seperti apa tampilannya. Dokumen dipakai sebagai pegangan saat
+membuat dan menguji aplikasi.</p>
+<h3>1.2 Ruang Lingkup</h3>
+<p>ThinkCook adalah aplikasi mobile untuk mencari, menyimpan, dan memasak
+resep. Data resep diambil dari TheMealDB dan aplikasi dibuat dengan Expo
+(React Native). Versi ini punya login lokal satu perangkat: pengguna
+mendaftar atau masuk dengan email dan kata sandi; akun dan sesi tersimpan
+aman di perangkat. Versi ini belum punya unggah resep atau komentar.</p>
+<h3>1.3 Istilah</h3>
+<table>
+<thead><tr><th>Istilah</th><th>Arti</th></tr></thead>
+<tr><td class="id">SRS</td><td>Software Requirements Specification, dokumen kebutuhan perangkat lunak</td></tr>
+<tr><td class="id">FR / NFR</td><td>Kebutuhan fungsional / kebutuhan non-fungsional</td></tr>
+<tr><td class="id">TheMealDB</td><td>Database resep terbuka yang jadi sumber data</td></tr>
+<tr><td class="id">Mode Masak</td><td>Mode di halaman detail: tombol berubah menjadi &laquo;Selesai Memasak&raquo; dan pengguna menandai langkah yang sudah selesai dengan mengetuknya</td></tr>
+<tr><td class="id">Akun Lokal</td><td>Akun yang dibuat dan disimpan di perangkat saja, tanpa server; satu perangkat satu akun</td></tr>
+</table>
+<p class="pageno">1</p>
+</div>
+
+<div class="page">
+<h2>2. Gambaran Umum</h2>
+<p><b>Produk:</b> aplikasi mandiri yang mengambil data lewat API TheMealDB.
+Resep favorit disimpan di HP.</p>
+<p><b>Pengguna:</b> orang yang mencari ide masakan, termasuk pemula, dan
+pengguna yang butuh fitur aksesibilitas seperti pembaca layar atau teks
+besar.</p>
+<p><b>Platform:</b> Android dan iOS.</p>
+<p><b>Batasan:</b> butuh internet untuk memuat resep, dan nama bahan mengikuti
+sumber data (bahasa Inggris). Akun hanya berlaku di perangkat tempat dibuat;
+tidak ada pemulihan kata sandi lewat server.</p>
+
+<h2>3. Kebutuhan Fungsional</h2>
+<table>
+<thead><tr><th>ID</th><th>Kebutuhan</th><th>Layar</th></tr></thead>
+<tr><td class="id">FR-01</td><td>Aplikasi punya menu bawah dengan 4 tab: Beranda, Cari, Favorit, Profil. Beranda tampil lebih dulu.</td><td>Semua</td></tr>
+<tr><td class="id">FR-02</td><td>Pengguna bisa mengetik di kolom cari dan memilih kategori yang dimuat dari API (misalnya Semua, Seafood, Beef, Chicken) untuk memfilter resep.</td><td>Beranda</td></tr>
+<tr><td class="id">FR-03</td><td>Aplikasi menampilkan satu resep di &laquo;Pilihan Hari Ini&raquo; dan daftar &laquo;Resep Terbaru&raquo;.</td><td>Beranda</td></tr>
+<tr><td class="id">FR-04</td><td>Menyentuh kartu resep membuka halaman detail resep.</td><td>Beranda, Cari, Favorit</td></tr>
+<tr><td class="id">FR-05</td><td>Pengguna bisa mencari resep dengan nama masakan; hasil tampil sebagai daftar beserta jumlahnya.</td><td>Cari</td></tr>
+<tr><td class="id">FR-06</td><td>Jika hasil kosong, sedang memuat, atau gagal, aplikasi menampilkan pesan yang jelas dan tombol coba lagi.</td><td>Cari</td></tr>
+<tr><td class="id">FR-07</td><td>Detail resep menampilkan foto, nama, kategori, dan negara asal.</td><td>Detail</td></tr>
+<tr><td class="id">FR-08</td><td>Detail resep menampilkan daftar bahan. Pengguna bisa menandai bahan yang sudah dimiliki, lalu muncul ringkasan seperti &laquo;5 dari 8 bahan siap&raquo;.</td><td>Detail</td></tr>
+</table>
+<p class="pageno">2</p>
+</div>
+
+<div class="page">
+<table>
+<thead><tr><th>ID</th><th>Kebutuhan</th><th>Layar</th></tr></thead>
+<tr><td class="id">FR-09</td><td>Detail resep menampilkan langkah memasak yang bernomor.</td><td>Detail</td></tr>
+<tr><td class="id">FR-10</td><td>Tombol &laquo;Mulai Mode Masak&raquo; mengaktifkan mode masak: muncul pengingat bahwa mode masak aktif dan pengguna bisa menandai tiap langkah yang sudah selesai dengan mengetuknya. Tombol berubah menjadi &laquo;Selesai Memasak&raquo; untuk keluar dari mode.</td><td>Detail</td></tr>
+<tr><td class="id">FR-11</td><td>Pengguna bisa menambah dan menghapus resep dari favorit lewat tombol di halaman detail.</td><td>Detail</td></tr>
+<tr><td class="id">FR-12</td><td>Halaman Favorit menampilkan jumlah dan daftar resep tersimpan. Data tetap ada setelah aplikasi ditutup. Resep juga bisa dihapus dari favorit lewat tombol hati di tiap kartu.</td><td>Favorit</td></tr>
+<tr><td class="id">FR-13</td><td>Halaman Profil menampilkan nama akun, jumlah Resep, Kategori, dan Favorit. Angka Favorit harus sama dengan halaman Favorit.</td><td>Profil</td></tr>
+<tr><td class="id">FR-14</td><td>Halaman detail punya tombol Kembali.</td><td>Detail</td></tr>
+<tr><td class="id">FR-15</td><td>Pengguna bisa mendaftar dengan nama, email, dan kata sandi (minimal 6 karakter), lalu masuk dengan email dan kata sandi. Pendaftaran hanya bisa dilakukan bila perangkat belum punya akun. Sesi masuk bertahan setelah aplikasi ditutup.</td><td>Masuk</td></tr>
+<tr><td class="id">FR-16</td><td>Pengguna bisa keluar dari akun lewat halaman Profil; sesudah keluar, aplikasi kembali meminta masuk.</td><td>Profil</td></tr>
+</table>
+<p class="pageno">3</p>
+</div>
+
+<div class="page">
+<h2>4. Rancangan Antarmuka</h2>
+<p>Desain dibuat di Figma dan terdiri dari 5 layar. Gayanya memakai latar
+krem, warna aksen oranye-merah, judul huruf serif, dan sudut yang membulat.
+Layar Masuk belum dirancang di Figma, jadi dibuka sebelum tab. Layar Mode
+Masak belum dirancang di Figma, jadi dibuka dari tombol di halaman detail
+(FR-10).</p>
+<table>
+<thead><tr><th>Layar</th><th>Keterangan</th></tr></thead>
+<tr><td class="id">Beranda</td><td>Kolom cari, filter kategori, Pilihan Hari Ini, dan Resep Terbaru.</td></tr>
+<tr><td class="id">Cari</td><td>Kolom input nama masakan dan daftar hasil pencarian.</td></tr>
+<tr><td class="id">Favorit</td><td>Daftar resep yang disimpan beserta jumlahnya.</td></tr>
+<tr><td class="id">Profil</td><td>Nama pengguna, tiga statistik, dan info aplikasi.</td></tr>
+<tr><td class="id">Detail Resep</td><td>Bahan, status bahan siap, langkah memasak, dan tombol Mulai Mode Masak.</td></tr>
+</table>
+
+<h2>5. Kebutuhan Non-Fungsional</h2>
+<table>
+<thead><tr><th>ID</th><th>Aspek</th><th>Kebutuhan</th></tr></thead>
+<tr><td class="id">NFR-01</td><td>Responsif</td><td>Tampilan menyesuaikan lebar layar 320 sampai 600 dp tanpa teks terpotong. Judul panjang pindah ke baris berikutnya.</td></tr>
+<tr><td class="id">NFR-02</td><td>Responsif</td><td>Konten tidak tertutup menu bawah, notch, atau gesture bar. Di tablet, daftar bisa tampil dua kolom.</td></tr>
+<tr><td class="id">NFR-03</td><td>Intuitif</td><td>Pengguna bisa membuka sebuah resep dalam maksimal 3 sentuhan dari layar awal.</td></tr>
+<tr><td class="id">NFR-04</td><td>Intuitif</td><td>Navigasi konsisten, tab aktif jelas, dan setiap aksi memberi respons visual. Pesan galat memakai bahasa Indonesia yang sederhana.</td></tr>
+<tr><td class="id">NFR-05</td><td>Aksesibel</td><td>Kontras teks minimal 4,5:1 (WCAG 2.1 AA).</td></tr>
+<tr><td class="id">NFR-06</td><td>Aksesibel</td><td>Ukuran area sentuh minimal 44 x 44 pt (iOS) atau 48 x 48 dp (Android).</td></tr>
+<tr><td class="id">NFR-07</td><td>Aksesibel</td><td>Semua tombol, tab, dan gambar punya label untuk pembaca layar (TalkBack dan VoiceOver).</td></tr>
+<tr><td class="id">NFR-08</td><td>Aksesibel</td><td>Teks mengikuti ukuran font sistem sampai 200%. Informasi tidak hanya dibedakan lewat warna.</td></tr>
+</table>
+<p class="pageno">4</p>
+</div>
+
+<div class="page">
+<table>
+<thead><tr><th>ID</th><th>Aspek</th><th>Kebutuhan</th></tr></thead>
+<tr><td class="id">NFR-09</td><td>Aman</td><td>Semua koneksi ke API memakai HTTPS.</td></tr>
+<tr><td class="id">NFR-10</td><td>Aman</td><td>Input pengguna divalidasi sebelum dikirim ke API, dan respons API yang tidak lengkap tidak membuat aplikasi crash.</td></tr>
+<tr><td class="id">NFR-11</td><td>Aman</td><td>Tidak ada API key atau rahasia di kode sumber. Kata sandi akun lokal disimpan sebagai hash SHA-256 dengan salt acak di SecureStore (keychain/keystore perangkat), bukan sebagai teks asli.</td></tr>
+<tr><td class="id">NFR-12</td><td>Aman</td><td>Aplikasi hanya meminta izin perangkat yang diperlukan. Saat ini tidak ada.</td></tr>
+<tr><td class="id">NFR-13</td><td>Performa</td><td>Beranda tampil maksimal 3 detik setelah aplikasi dibuka, dan hasil pencarian maksimal 2 detik di jaringan 4G.</td></tr>
+<tr><td class="id">NFR-14</td><td>Aman</td><td>Sesi masuk disimpan aman di perangkat dan dihapus saat pengguna keluar; keluar menghapus sesi, bukan akun.</td></tr>
+</table>
+
+<h2>6. Data dan API</h2>
+<p>Aplikasi memakai lima endpoint TheMealDB: search.php (cari nama),
+filter.php (per kategori), lookup.php (detail resep), random.php (pilihan hari
+ini), dan categories.php (daftar kategori). Data favorit disimpan lokal berisi
+id, nama, kategori, dan foto resep.</p>
+<p>Akun lokal disimpan di SecureStore berisi nama, email, salt, dan hash kata
+sandi; sesi berisi token acak dan email. Favorit tetap memakai AsyncStorage
+karena bukan data sensitif.</p>
+
+<h2>7. Catatan untuk Perbaikan Desain</h2>
+<ul>
+<li>Bahan dan langkah masih berbahasa Inggris karena berasal dari API
+TheMealDB, sedangkan antarmuka berbahasa Indonesia.</li>
+<li>Mode Masak saat ini menandai langkah di halaman yang sama; panduan satu
+langkah per layar belum diimplementasikan.</li>
+<li>Layar Masuk belum dirancang di Figma.</li>
+<li>Kontras teks sudah terverifikasi: semua pasangan teks utama di atas 4,5:1
+(mis. primaryDark di putih 4,94:1; secondary di krem 5,91:1).</li>
+<li>Chip kategori terpilih ditandai ikon centang, bukan hanya warna; status
+favorit, bahan, dan langkah dibedakan lewat ikon, bukan hanya warna.</li>
+</ul>
+<div class="note">Pengecekan terhadap kode (14 November 2026): FR-01 sampai FR-09,
+FR-11 sampai FR-14 sesuai dengan aplikasi; tombol favorit, tampilan saat
+memuat, saat hasil kosong, dan saat gagal sudah ada di aplikasi; lima
+endpoint TheMealDB sesuai dengan kode.</div>
+<p class="pageno">5</p>
+</div>
+
+</body>
+</html>

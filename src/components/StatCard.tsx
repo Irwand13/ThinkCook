@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
-import { cardShadow, colors, fonts } from '../constants/styles';
+import { cardShadow, colors, fonts, radius, spacing } from '../constants/styles';
 
 type IoniconsName = keyof typeof Ionicons.glyphMap;
 
@@ -14,7 +14,11 @@ export default function StatCard({
   value: string;
 }) {
   return (
-    <View style={statStyles.card}>
+    <View
+      style={statStyles.card}
+      accessible
+      accessibilityLabel={`${label}: ${value}`}
+    >
       <View style={statStyles.iconCircle}>
         <Ionicons name={icon} size={19} color={colors.primary} />
       </View>
@@ -30,11 +34,11 @@ const statStyles = StyleSheet.create({
   card: {
     flex: 1,
     backgroundColor: colors.card,
-    borderRadius: 16,
+    borderRadius: radius.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    paddingVertical: 14,
-    paddingHorizontal: 8,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
     alignItems: 'center',
     ...cardShadow,
   },
