@@ -138,47 +138,49 @@ export default function HomeScreen() {
       {heroLoading ? (
         <SkeletonBlock height={heroHeight} style={{ borderRadius: radius.xl }} />
       ) : heroRecipe ? (
-        <Pressable
-          style={({ pressed }) => [
-            homeStyles.heroCard,
-            pressed && homeStyles.heroPressed,
-          ]}
-          onPress={() =>
-            router.push({
-              pathname: '/recipes/[id]',
-              params: { id: String(heroRecipe.id) },
-            })
-          }
-          accessibilityRole="button"
-          accessibilityLabel={`Buka detail resep ${heroRecipe.title}`}
-        >
-          <Image
-            source={{ uri: heroRecipe.image }}
-            style={[homeStyles.heroImage, { height: heroHeight }]}
-            accessible={false}
-          />
-          <LinearGradient
-            colors={[
-              'rgba(43, 33, 24, 0)',
-              'rgba(43, 33, 24, 0.25)',
-              'rgba(43, 33, 24, 0.82)',
+        <View style={homeStyles.heroWrap}>
+          <Pressable
+            style={({ pressed }) => [
+              homeStyles.heroCard,
+              pressed && homeStyles.heroPressed,
             ]}
-            locations={[0, 0.45, 1]}
-            style={homeStyles.heroScrim}
-          />
-          <View style={homeStyles.heroOverlay}>
-            <Text style={homeStyles.heroTitle} numberOfLines={2}>
-              {heroRecipe.title}
-            </Text>
-            <View style={homeStyles.chipRow}>
-              <View style={homeStyles.chipSolid}>
-                <Text style={homeStyles.chipSolidText}>{heroRecipe.category}</Text>
-              </View>
-              <View style={homeStyles.chipSolid}>
-                <Text style={homeStyles.chipSolidText}>{heroRecipe.area}</Text>
+            onPress={() =>
+              router.push({
+                pathname: '/recipes/[id]',
+                params: { id: String(heroRecipe.id) },
+              })
+            }
+            accessibilityRole="button"
+            accessibilityLabel={`Buka detail resep ${heroRecipe.title}`}
+          >
+            <Image
+              source={{ uri: heroRecipe.image }}
+              style={[homeStyles.heroImage, { height: heroHeight }]}
+              accessible={false}
+            />
+            <LinearGradient
+              colors={[
+                'rgba(43, 33, 24, 0)',
+                'rgba(43, 33, 24, 0.25)',
+                'rgba(43, 33, 24, 0.82)',
+              ]}
+              locations={[0, 0.45, 1]}
+              style={homeStyles.heroScrim}
+            />
+            <View style={homeStyles.heroOverlay}>
+              <Text style={homeStyles.heroTitle} numberOfLines={2}>
+                {heroRecipe.title}
+              </Text>
+              <View style={homeStyles.chipRow}>
+                <View style={homeStyles.chipSolid}>
+                  <Text style={homeStyles.chipSolidText}>{heroRecipe.category}</Text>
+                </View>
+                <View style={homeStyles.chipSolid}>
+                  <Text style={homeStyles.chipSolidText}>{heroRecipe.area}</Text>
+                </View>
               </View>
             </View>
-          </View>
+          </Pressable>
           <Pressable
             style={({ pressed }) => [
               homeStyles.heroRefresh,
@@ -191,7 +193,7 @@ export default function HomeScreen() {
           >
             <Ionicons name="reload" size={20} color={colors.primary} />
           </Pressable>
-        </Pressable>
+        </View>
       ) : null}
 
       <View style={homeStyles.categoryBlock}>
@@ -328,13 +330,17 @@ export default function HomeScreen() {
 }
 
 const homeStyles = StyleSheet.create({
+  // Pembungkus hero: tombol acak duduk sebagai saudara kartu hero, bukan
+  // di dalamnya — dua area ketuk bersarang rawan konflik gestur.
+  heroWrap: {
+    marginBottom: spacing.xl,
+  },
   heroCard: {
     backgroundColor: colors.card,
     borderRadius: radius.xl,
     borderWidth: 1,
     borderColor: colors.border,
     overflow: 'hidden',
-    marginBottom: spacing.xl,
     ...cardShadow,
   },
   heroPressed: {

@@ -14,7 +14,6 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ErrorMessage from '../../components/ErrorMessage';
 import { DetailSkeleton } from '../../components/Skeleton';
-import StatCard from '../../components/StatCard';
 import { cardShadow, colors, fonts, radius, spacing, type } from '../../constants/styles';
 import { useResponsive } from '../../constants/responsive';
 import { isFavorite, toggleFavorite } from '../../services/favoriteService';
@@ -231,20 +230,6 @@ export default function RecipeDetailScreen() {
           ))}
         </View>
 
-        <View style={detailStyles.statRow}>
-          <StatCard
-            icon="restaurant-outline"
-            label="Kategori"
-            value={recipe.category}
-          />
-          <StatCard icon="location-outline" label="Asal" value={recipe.area} />
-          <StatCard
-            icon="list-outline"
-            label="Bahan"
-            value={`${recipe.ingredients.length} item`}
-          />
-        </View>
-
         <Text style={detailStyles.sectionTitle}>Bahan-bahan</Text>
         <Text style={detailStyles.sectionHint}>
           Ketuk bahan untuk menandai yang sudah kamu siapkan.
@@ -418,15 +403,15 @@ export default function RecipeDetailScreen() {
 
         <Pressable
           style={({ pressed }) => [
-            detailStyles.backButton,
+            detailStyles.backButtonGhost,
             pressed && detailStyles.buttonPressed,
           ]}
           onPress={handleGoBack}
           accessibilityRole="button"
           accessibilityLabel="Kembali"
         >
-          <Ionicons name="arrow-back" size={18} color={colors.white} />
-          <Text style={detailStyles.backButtonText}>Kembali</Text>
+          <Ionicons name="arrow-back" size={18} color={colors.primaryDark} />
+          <Text style={detailStyles.backButtonGhostText}>Kembali</Text>
         </Pressable>
       </View>
     </ScrollView>
@@ -521,12 +506,6 @@ const detailStyles = StyleSheet.create({
     fontSize: 12,
     fontFamily: fonts.bodySemi,
     color: colors.secondary,
-  },
-  statRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: spacing.lg,
-    marginBottom: 6,
   },
   sectionTitle: {
     ...type.section,
@@ -716,6 +695,26 @@ const detailStyles = StyleSheet.create({
   },
   backButtonText: {
     color: colors.white,
+    fontSize: 16,
+    fontFamily: fonts.bodyBold,
+    marginLeft: 8,
+  },
+  // Tombol kembali di bawah konten: outline, bukan isi kedua. Satu layar
+  // satu tombol utama — di Detail itu "Mulai Mode Masak".
+  backButtonGhost: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.primaryDark,
+    paddingVertical: 14,
+    borderRadius: radius.lg,
+    marginTop: 22,
+    marginBottom: 30,
+  },
+  backButtonGhostText: {
+    color: colors.primaryDark,
     fontSize: 16,
     fontFamily: fonts.bodyBold,
     marginLeft: 8,
