@@ -1,15 +1,13 @@
-import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 import { cardShadow, colors, fonts, radius, spacing } from '../constants/styles';
 
-type IoniconsName = keyof typeof Ionicons.glyphMap;
-
+// Statistik tampil sebagai tipografi, bukan tile berikon: angka besar yang
+// memimpin, label kecil di bawahnya. (Ikon dalam lingkaran warna di atas
+// angka adalah pola template dashboard, bukan pola aplikasi resep.)
 export default function StatCard({
-  icon,
   label,
   value,
 }: {
-  icon: IoniconsName;
   label: string;
   value: string;
 }) {
@@ -19,9 +17,6 @@ export default function StatCard({
       accessible
       accessibilityLabel={`${label}: ${value}`}
     >
-      <View style={statStyles.iconCircle}>
-        <Ionicons name={icon} size={19} color={colors.primary} />
-      </View>
       <Text style={statStyles.value} numberOfLines={1}>
         {value}
       </Text>
@@ -42,17 +37,8 @@ const statStyles = StyleSheet.create({
     alignItems: 'center',
     ...cardShadow,
   },
-  iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
   value: {
-    fontSize: 15,
+    fontSize: 24,
     fontFamily: fonts.bodyBold,
     color: colors.text,
     textAlign: 'center',

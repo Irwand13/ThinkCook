@@ -72,20 +72,11 @@ export default function ProfileScreen() {
 
         <View style={profileStyles.statRow}>
           <StatCard
-            icon="restaurant-outline"
             label="Resep"
             value={recipeCount === null ? '–' : String(recipeCount)}
           />
-          <StatCard
-            icon="grid-outline"
-            label="Kategori"
-            value={`${categoryCount}`}
-          />
-          <StatCard
-            icon="heart-outline"
-            label="Favorit"
-            value={String(favoriteCount)}
-          />
+          <StatCard label="Kategori" value={`${categoryCount}`} />
+          <StatCard label="Favorit" value={String(favoriteCount)} />
         </View>
 
         <View style={profileStyles.infoCard}>
