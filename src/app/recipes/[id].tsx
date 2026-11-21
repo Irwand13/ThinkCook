@@ -17,7 +17,9 @@ import { DetailSkeleton } from '../../components/Skeleton';
 import { cardShadow, colors, fonts, radius, spacing, type } from '../../constants/styles';
 import { useResponsive } from '../../constants/responsive';
 import { isFavorite, toggleFavorite } from '../../services/favoriteService';
+import { notifyFavoriteAdded } from '../../services/notificationService';
 import { getRecipeById } from '../../services/recipeService';
+import { shareRecipeBySms } from '../../services/shareService';
 import { Recipe } from '../../types/recipe';
 
 export default function RecipeDetailScreen() {
@@ -30,6 +32,7 @@ export default function RecipeDetailScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const [isFav, setIsFav] = useState(false);
+  const [smsNote, setSmsNote] = useState<string | null>(null);
 
   const [checkedIngredients, setCheckedIngredients] = useState<number[]>([]);
   const [doneSteps, setDoneSteps] = useState<number[]>([]);
@@ -103,6 +106,23 @@ export default function RecipeDetailScreen() {
       image: recipe.image,
     });
     setIsFav(statusTerbaru);
+    if (statusTerbaru) {
+      void notifyFavoriteAdded(recipe.title);
+    }
+  };
+
+  const handleShareSms = async (): Promise<void> => {
+    if (!recipe) {
+      return;
+    }
+    const result = await shareRecipeBySms(recipe);
+    if (result === 'unavailable') {
+      setSmsNote('SMS tidak tersedia di perangkat ini.');
+    } else if (result === 'cancelled') {
+      setSmsNote(null);
+    } else {
+      setSmsNote('Aplikasi SMS dibuka — tinggal pilih penerima dan kirim.');
+    }
   };
 
   const toggleIngredient = (index: number): void => {
@@ -403,6 +423,22 @@ export default function RecipeDetailScreen() {
 
         <Pressable
           style={({ pressed }) => [
+            detailStyles.youtubeButton,
+            pressed && detailStyles.buttonPressed,
+          ]}
+          onPress={() => void handleShareSms()}
+          accessibilityRole="button"
+          accessibilityLabel="Bagikan resep ini via SMS"
+        >
+          <Ionicons name="chatbox-outline" size={20} color={colors.primaryDark} />
+          <Text style={detailStyles.youtubeText}>Bagikan via SMS</Text>
+        </Pressable>
+        {smsNote ? (
+          <Text style={detailStyles.smsNote}>{smsNote}</Text>
+        ) : null}
+
+        <Pressable
+          style={({ pressed }) => [
             detailStyles.backButtonGhost,
             pressed && detailStyles.buttonPressed,
           ]}
@@ -682,6 +718,14 @@ const detailStyles = StyleSheet.create({
     fontSize: 15,
     fontFamily: fonts.bodyBold,
     marginLeft: 8,
+  },
+  smsNote: {
+    fontSize: 12,
+    fontFamily: fonts.body,
+    color: colors.secondary,
+    textAlign: 'center',
+    marginTop: spacing.sm,
+    lineHeight: 17,
   },
   backButton: {
     flexDirection: 'row',

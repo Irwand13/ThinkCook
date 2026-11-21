@@ -8,12 +8,21 @@ import {
   PlusJakartaSans_600SemiBold,
   PlusJakartaSans_700Bold,
 } from '@expo-google-fonts/plus-jakarta-sans';
+import NetInfo from '@react-native-community/netinfo';
 import { useFonts } from 'expo-font';
 import { router, Stack, useRootNavigationState, useSegments } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, AppState, View } from 'react-native';
+import OfflineBanner from '../components/OfflineBanner';
 import { colors } from '../constants/styles';
-import { getSessionUser } from '../services/authService';
+import { supabase } from '../lib/supabase';
+import {
+  AuthUser,
+  getSessionUser,
+  onAuthChange,
+} from '../services/authService';
+import { setupNotifications } from '../services/notificationService';
+import { refreshStaleCaches } from '../services/recipeService';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -29,10 +38,23 @@ export default function RootLayout() {
   const rootNav = useRootNavigationState();
 
   useEffect(() => {
+    setupNotifications();
+  }, []);
+
+  useEffect(() => {
     if (!rootNav?.key) {
       return;
     }
     let aktif = true;
+
+    const routeFor = (sessionUser: AuthUser | null): void => {
+      const inLogin = segments[0] === 'login';
+      if (!sessionUser && !inLogin) {
+        router.replace('/login');
+      } else if (sessionUser && inLogin) {
+        router.replace('/(tabs)');
+      }
+    };
 
     getSessionUser()
       .then((sessionUser) => {
@@ -40,13 +62,7 @@ export default function RootLayout() {
           return;
         }
         setChecking(false);
-
-        const inLogin = segments[0] === 'login';
-        if (!sessionUser && !inLogin) {
-          router.replace('/login');
-        } else if (sessionUser && inLogin) {
-          router.replace('/(tabs)');
-        }
+        routeFor(sessionUser);
       })
       .catch(() => {
         if (aktif) {
@@ -54,10 +70,35 @@ export default function RootLayout() {
         }
       });
 
+    const unsubscribe = onAuthChange((sessionUser) => {
+      if (aktif) {
+        routeFor(sessionUser);
+      }
+    });
+
     return () => {
       aktif = false;
+      unsubscribe();
     };
   }, [segments, rootNav?.key]);
+
+  // Kembali ke foreground: segarkan sesi Supabase, lalu segarkan cache
+  // yang sudah basi kalau sedang online.
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') {
+        return;
+      }
+      void (async () => {
+        await supabase.auth.getSession();
+        const net = await NetInfo.fetch();
+        if (net.isConnected) {
+          await refreshStaleCaches();
+        }
+      })();
+    });
+    return () => subscription.remove();
+  }, []);
 
   if (!fontsLoaded || checking) {
     return (
@@ -75,16 +116,19 @@ export default function RootLayout() {
   }
 
   return (
-    <Stack>
-      <Stack.Screen name="login" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <OfflineBanner />
+      <Stack>
+        <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
-      <Stack.Screen
-        name="recipes/[id]"
-        options={{
-          headerShown: false,
-        }}
-      />
-    </Stack>
+        <Stack.Screen
+          name="recipes/[id]"
+          options={{
+            headerShown: false,
+          }}
+        />
+      </Stack>
+    </View>
   );
 }

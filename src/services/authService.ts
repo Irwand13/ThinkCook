@@ -1,63 +1,65 @@
-import * as Crypto from 'expo-crypto';
-import * as SecureStore from 'expo-secure-store';
+import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
+import { isSupabaseConfigured, supabase } from '../lib/supabase';
+import type { User } from '@supabase/supabase-js';
 
-const ACCOUNT_KEY = 'thinkcook:account';
-const SESSION_KEY = 'thinkcook:session';
+WebBrowser.maybeCompleteAuthSession();
 
 export interface AuthUser {
   name: string;
   email: string;
 }
 
-interface StoredAccount extends AuthUser {
-  salt: string;
-  passwordHash: string;
-  createdAt: string;
+function requireConfig(): void {
+  if (!isSupabaseConfigured) {
+    throw new Error(
+      'Supabase belum dikonfigurasi. Isi file .env dulu, lalu jalankan ulang aplikasinya.',
+    );
+  }
 }
 
-interface StoredSession {
-  token: string;
-  email: string;
-  createdAt: string;
+function toAuthUser(user: User): AuthUser {
+  const email = user.email ?? '';
+  const meta = (user.user_metadata ?? {}) as { name?: unknown };
+  const name =
+    typeof meta.name === 'string' && meta.name.trim().length > 0
+      ? meta.name.trim()
+      : email.split('@')[0] || 'Pengguna';
+  return { name, email };
 }
 
-// Akun lokal satu perangkat, tanpa server. Kata sandi tidak pernah disimpan
-// mentah: yang tersimpan hanya hash SHA-256 dengan salt acak. Ini cukup untuk
-// demo praktikum; akun produksi butuh server dengan bcrypt/argon2.
-function randomBase64(byteCount: number): string {
-  const bytes = Crypto.getRandomBytes(byteCount);
-  let binary = '';
-  bytes.forEach((byte) => {
-    binary += String.fromCharCode(byte);
-  });
-  return btoa(binary);
-}
-
-async function hashPassword(password: string, salt: string): Promise<string> {
-  return Crypto.digestStringAsync(
-    Crypto.CryptoDigestAlgorithm.SHA256,
-    `${salt}:${password}`,
-  );
+function friendlyError(error: unknown): Error {
+  const message = error instanceof Error ? error.message : '';
+  if (message.includes('Invalid login credentials')) {
+    return new Error('Email atau kata sandi salah.');
+  }
+  if (message.includes('User already registered')) {
+    return new Error('Email ini sudah terdaftar. Coba masuk.');
+  }
+  if (message.includes('Password should be at least')) {
+    return new Error('Kata sandi minimal 6 karakter.');
+  }
+  if (message.includes('Unable to validate email address')) {
+    return new Error('Format email tidak valid.');
+  }
+  if (message.includes('Email not confirmed')) {
+    return new Error('Email belum diverifikasi. Cek kotak masuk kamu.');
+  }
+  if (
+    message.includes('Failed to fetch') ||
+    message.includes('fetch failed') ||
+    message.includes('Network request failed')
+  ) {
+    return new Error('Tidak ada koneksi internet. Coba lagi nanti.');
+  }
+  if (message.length > 0) {
+    return new Error(message);
+  }
+  return new Error('Terjadi kesalahan. Coba lagi.');
 }
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-async function readAccount(): Promise<StoredAccount | null> {
-  try {
-    const raw = await SecureStore.getItemAsync(ACCOUNT_KEY);
-    if (!raw) {
-      return null;
-    }
-    return JSON.parse(raw) as StoredAccount;
-  } catch {
-    return null;
-  }
-}
-
-export async function hasAccount(): Promise<boolean> {
-  return (await readAccount()) !== null;
 }
 
 export async function register(
@@ -65,9 +67,9 @@ export async function register(
   email: string,
   password: string,
 ): Promise<AuthUser> {
+  requireConfig();
   const cleanName = name.trim();
   const cleanEmail = email.trim().toLowerCase();
-
   if (cleanName.length < 2) {
     throw new Error('Nama minimal 2 huruf.');
   }
@@ -78,77 +80,78 @@ export async function register(
     throw new Error('Kata sandi minimal 6 karakter.');
   }
 
-  if (await readAccount()) {
-    throw new Error('Perangkat ini sudah punya akun. Masuk dengan akun itu.');
+  const { data, error } = await supabase.auth.signUp({
+    email: cleanEmail,
+    password,
+    options: { data: { name: cleanName } },
+  });
+  if (error) {
+    throw friendlyError(error);
   }
-
-  const salt = randomBase64(16);
-  const passwordHash = await hashPassword(password, salt);
-  const account: StoredAccount = {
-    name: cleanName,
-    email: cleanEmail,
-    salt,
-    passwordHash,
-    createdAt: new Date().toISOString(),
-  };
-  const session: StoredSession = {
-    token: randomBase64(32),
-    email: cleanEmail,
-    createdAt: new Date().toISOString(),
-  };
-
-  await SecureStore.setItemAsync(ACCOUNT_KEY, JSON.stringify(account));
-  await SecureStore.setItemAsync(SESSION_KEY, JSON.stringify(session));
-
-  return { name: cleanName, email: cleanEmail };
+  if (!data.session || !data.user) {
+    throw new Error(
+      'Akun dibuat. Cek email kamu untuk verifikasi, lalu masuk.',
+    );
+  }
+  return toAuthUser(data.user);
 }
 
-export async function login(
-  email: string,
-  password: string,
-): Promise<AuthUser> {
-  const cleanEmail = email.trim().toLowerCase();
-
-  const account = await readAccount();
-  if (!account) {
-    throw new Error('Belum ada akun di perangkat ini. Daftar dulu.');
+export async function login(email: string, password: string): Promise<AuthUser> {
+  requireConfig();
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email.trim().toLowerCase(),
+    password,
+  });
+  if (error) {
+    throw friendlyError(error);
   }
-  if (account.email !== cleanEmail) {
+  if (!data.user) {
     throw new Error('Email atau kata sandi salah.');
   }
+  return toAuthUser(data.user);
+}
 
-  const passwordHash = await hashPassword(password, account.salt);
-  if (passwordHash !== account.passwordHash) {
-    throw new Error('Email atau kata sandi salah.');
+export async function signInWithGoogle(): Promise<AuthUser | null> {
+  requireConfig();
+  const redirectTo = Linking.createURL('auth/callback');
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo },
+  });
+  if (error || !data.url) {
+    throw friendlyError(error ?? new Error('Gagal memulai masuk dengan Google.'));
   }
-
-  const session: StoredSession = {
-    token: randomBase64(32),
-    email: account.email,
-    createdAt: new Date().toISOString(),
-  };
-  await SecureStore.setItemAsync(SESSION_KEY, JSON.stringify(session));
-
-  return { name: account.name, email: account.email };
+  const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+  if (result.type !== 'success') {
+    return null;
+  }
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  return session?.user ? toAuthUser(session.user) : null;
 }
 
 export async function logout(): Promise<void> {
-  await SecureStore.deleteItemAsync(SESSION_KEY);
+  await supabase.auth.signOut({ scope: 'local' });
 }
 
 export async function getSessionUser(): Promise<AuthUser | null> {
-  try {
-    const raw = await SecureStore.getItemAsync(SESSION_KEY);
-    if (!raw) {
-      return null;
-    }
-    const session = JSON.parse(raw) as StoredSession;
-    const account = await readAccount();
-    if (!account || account.email !== session.email) {
-      return null;
-    }
-    return { name: account.name, email: account.email };
-  } catch {
+  if (!isSupabaseConfigured) {
     return null;
   }
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  return session?.user ? toAuthUser(session.user) : null;
+}
+
+export function onAuthChange(
+  callback: (user: AuthUser | null) => void,
+): () => void {
+  const {
+    data: { subscription },
+  } = supabase.auth.onAuthStateChange((_event, session) => {
+    callback(session?.user ? toAuthUser(session.user) : null);
+  });
+  return () => subscription.unsubscribe();
 }

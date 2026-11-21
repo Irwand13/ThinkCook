@@ -2,19 +2,37 @@ import { Ionicons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import StatCard from '../../components/StatCard';
 import { cardShadow, colors, fonts, radius, spacing } from '../../constants/styles';
 import { AuthUser, getSessionUser, logout } from '../../services/authService';
 import { getCategories, getRecipes } from '../../services/recipeService';
 import { getFavorites } from '../../services/favoriteService';
+import { isReminderEnabled, setDailyReminder } from '../../services/notificationService';
 
 export default function ProfileScreen() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [favoriteCount, setFavoriteCount] = useState(0);
   const [categoryCount, setCategoryCount] = useState(0);
   const [recipeCount, setRecipeCount] = useState<number | null>(null);
+  const [reminderOn, setReminderOn] = useState(false);
+  const [reminderBusy, setReminderBusy] = useState(false);
+  const [reminderError, setReminderError] = useState<string | null>(null);
+
+  const handleReminderToggle = async (next: boolean): Promise<void> => {
+    setReminderBusy(true);
+    setReminderError(null);
+    const ok = await setDailyReminder(next);
+    if (!ok) {
+      setReminderError(
+        'Izin notifikasi belum diberikan. Aktifkan di pengaturan HP.',
+      );
+    } else {
+      setReminderOn(next);
+    }
+    setReminderBusy(false);
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -46,6 +64,11 @@ export default function ProfileScreen() {
         })
         .catch(() => {
         });
+      isReminderEnabled().then((enabled) => {
+        if (aktif) {
+          setReminderOn(enabled);
+        }
+      });
 
       return () => {
         aktif = false;
@@ -101,6 +124,25 @@ export default function ProfileScreen() {
             <Text style={profileStyles.rowLabel}>Versi</Text>
             <Text style={profileStyles.rowValue}>1.0.0</Text>
           </View>
+          <View style={[profileStyles.row, profileStyles.rowDivider]}>
+            <View style={profileStyles.reminderTextWrap}>
+              <Text style={profileStyles.rowLabel}>Pengingat masak harian</Text>
+              <Text style={profileStyles.reminderSubtext}>
+                Setiap hari pukul 05.00
+              </Text>
+            </View>
+            <Switch
+              value={reminderOn}
+              onValueChange={(next) => void handleReminderToggle(next)}
+              disabled={reminderBusy}
+              trackColor={{ false: colors.border, true: colors.sage }}
+              thumbColor={colors.white}
+              accessibilityLabel="Pengingat masak harian"
+            />
+          </View>
+          {reminderError ? (
+            <Text style={profileStyles.reminderError}>{reminderError}</Text>
+          ) : null}
         </View>
 
         <Pressable
@@ -230,5 +272,22 @@ const profileStyles = StyleSheet.create({
   },
   buttonPressed: {
     opacity: 0.85,
+  },
+  reminderTextWrap: {
+    flex: 1,
+    marginRight: spacing.md,
+  },
+  reminderSubtext: {
+    fontSize: 12,
+    fontFamily: fonts.body,
+    color: colors.secondary,
+    marginTop: 2,
+  },
+  reminderError: {
+    fontSize: 12,
+    fontFamily: fonts.body,
+    color: colors.primaryDark,
+    marginTop: 8,
+    lineHeight: 17,
   },
 });

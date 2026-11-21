@@ -15,7 +15,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, fonts, radius, spacing, styles } from '../constants/styles';
-import { hasAccount, login, register } from '../services/authService';
+import { isSupabaseConfigured } from '../lib/supabase';
+import { login, register, signInWithGoogle } from '../services/authService';
 
 export default function LoginScreen() {
   const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -24,6 +25,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
 
   const submit = async (): Promise<void> => {
     setError(null);
@@ -42,18 +44,24 @@ export default function LoginScreen() {
     }
   };
 
-  const switchMode = async (): Promise<void> => {
+  const handleGoogle = async (): Promise<void> => {
     setError(null);
-    if (mode === 'login') {
-      const exists = await hasAccount();
-      if (exists) {
-        setError('Perangkat ini sudah punya akun. Masuk dengan akun itu.');
-        return;
+    setGoogleBusy(true);
+    try {
+      const user = await signInWithGoogle();
+      if (user) {
+        router.replace('/(tabs)');
       }
-      setMode('register');
-    } else {
-      setMode('login');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Terjadi kesalahan.');
+    } finally {
+      setGoogleBusy(false);
     }
+  };
+
+  const switchMode = (): void => {
+    setError(null);
+    setMode((prev) => (prev === 'login' ? 'register' : 'login'));
   };
 
   return (
@@ -81,6 +89,16 @@ export default function LoginScreen() {
                 : 'Buat akun untuk menyimpan favoritmu.'}
             </Text>
           </View>
+
+          {!isSupabaseConfigured ? (
+            <View style={loginStyles.errorBox} accessibilityRole="alert">
+              <Ionicons name="warning-outline" size={18} color={colors.primaryDark} />
+              <Text style={loginStyles.errorText}>
+                Supabase belum dikonfigurasi (.env). Masuk dan daftar belum bisa
+                dipakai.
+              </Text>
+            </View>
+          ) : null}
 
           {mode === 'register' && (
             <View style={loginStyles.field}>
@@ -157,6 +175,30 @@ export default function LoginScreen() {
             </Text>
           </Pressable>
 
+          <View style={loginStyles.dividerRow}>
+            <View style={loginStyles.dividerLine} />
+            <Text style={loginStyles.dividerText}>atau</Text>
+            <View style={loginStyles.dividerLine} />
+          </View>
+
+          <Pressable
+            style={({ pressed }) => [
+              loginStyles.googleButton,
+              pressed && loginStyles.pressed,
+              googleBusy && loginStyles.disabled,
+            ]}
+            onPress={() => void handleGoogle()}
+            disabled={googleBusy}
+            accessibilityRole="button"
+            accessibilityLabel="Masuk dengan Google"
+            accessibilityState={{ disabled: googleBusy }}
+          >
+            <Ionicons name="logo-google" size={19} color={colors.primaryDark} />
+            <Text style={loginStyles.googleText}>
+              {googleBusy ? 'Membuka Google...' : 'Masuk dengan Google'}
+            </Text>
+          </Pressable>
+
           <Pressable
             style={loginStyles.switchRow}
             onPress={() => void switchMode()}
@@ -175,8 +217,8 @@ export default function LoginScreen() {
           </Pressable>
 
           <Text style={loginStyles.note}>
-            Akun tersimpan di perangkat ini saja. Kata sandi disimpan sebagai
-            hash, bukan teks asli.
+            Akun tersimpan aman di server. Kata sandi tidak pernah disimpan
+            mentah.
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -268,6 +310,39 @@ const loginStyles = StyleSheet.create({
     fontSize: 16,
     fontFamily: fonts.bodyBold,
     color: colors.white,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.lg,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  dividerText: {
+    fontSize: 12,
+    fontFamily: fonts.body,
+    color: colors.secondary,
+    marginHorizontal: spacing.md,
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.primaryDark,
+    borderRadius: radius.lg,
+    minHeight: 52,
+    marginTop: spacing.lg,
+  },
+  googleText: {
+    fontSize: 15,
+    fontFamily: fonts.bodyBold,
+    color: colors.primaryDark,
+    marginLeft: spacing.sm,
   },
   switchRow: {
     alignItems: 'center',

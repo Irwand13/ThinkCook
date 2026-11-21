@@ -73,6 +73,15 @@ export async function fetchMealDetailFromApi(
   return meals.length > 0 ? meals[0] : null;
 }
 
+export async function fetchMealsByAreaFromApi(
+  area: string,
+): Promise<MealDbMealSummary[]> {
+  const data = await fetchJson<MealDbMealsResponse>(
+    `${BASE_URL}/filter.php?a=${encodeURIComponent(area)}`,
+  );
+  return (data.meals ?? []) as MealDbMealSummary[];
+}
+
 export async function fetchRandomMealFromApi(): Promise<MealDbMeal | null> {
   const data = await fetchJson<MealDbMealsResponse>(`${BASE_URL}/random.php`);
   const meals = (data.meals ?? []) as MealDbMeal[];
