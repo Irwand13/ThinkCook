@@ -1,0 +1,165 @@
+import * as Location from 'expo-location';
+
+export interface DetectedArea {
+  city: string | null;
+  country: string | null;
+  area: string | null;
+}
+
+// Kode negara (ISO) ke nama area TheMealDB, dicek ke list.php?a=list.
+const COUNTRY_TO_AREA: Record<string, string> = {
+  AF: 'Afghan',
+  AL: 'Albanian',
+  DZ: 'Algerian',
+  AD: 'Andorran',
+  AO: 'Angolan',
+  AR: 'Argentine',
+  AM: 'Armenian',
+  AU: 'Australian',
+  AT: 'Austrian',
+  AZ: 'Azerbaijani',
+  BS: 'Bahamian',
+  BH: 'Bahraini',
+  BD: 'Bangladeshi',
+  BB: 'Barbadian',
+  BY: 'Belarusian',
+  BE: 'Belgian',
+  BZ: 'Belizean',
+  BJ: 'Beninese',
+  BT: 'Bhutanese',
+  BO: 'Bolivian',
+  BR: 'Brazilian',
+  BN: 'Bruneian',
+  BG: 'Bulgarian',
+  KH: 'Cambodian',
+  CM: 'Cameroonian',
+  CA: 'Canadian',
+  CL: 'Chilean',
+  CN: 'Chinese',
+  CO: 'Colombian',
+  CR: 'Costa Rican',
+  HR: 'Croatian',
+  CU: 'Cuban',
+  CY: 'Cypriot',
+  CZ: 'Czech',
+  DK: 'Danish',
+  DO: 'Dominican',
+  EC: 'Ecuadorean',
+  EG: 'Egyptian',
+  SV: 'Salvadoran',
+  EE: 'Estonian',
+  ET: 'Ethiopian',
+  FJ: 'Fijian',
+  FI: 'Finnish',
+  FR: 'French',
+  GE: 'Georgian',
+  DE: 'German',
+  GH: 'Ghanaian',
+  GR: 'Greek',
+  GT: 'Guatemalan',
+  HT: 'Haitian',
+  HN: 'Honduran',
+  HK: 'Hong Konger',
+  HU: 'Hungarian',
+  IS: 'Icelander',
+  IN: 'Indian',
+  ID: 'Indonesian',
+  IR: 'Iranian',
+  IQ: 'Iraqi',
+  IE: 'Irish',
+  IL: 'Israeli',
+  IT: 'Italian',
+  JM: 'Jamaican',
+  JP: 'Japanese',
+  JO: 'Jordanian',
+  KZ: 'Kazakhstani',
+  KE: 'Kenyan',
+  KW: 'Kuwaiti',
+  LA: 'Laotian',
+  LV: 'Latvian',
+  LB: 'Lebanese',
+  LY: 'Libyan',
+  LT: 'Lithuanian',
+  MY: 'Malaysian',
+  MV: 'Maldivan',
+  MX: 'Mexican',
+  MD: 'Moldovan',
+  MN: 'Mongolian',
+  ME: 'Montenegrin',
+  MA: 'Moroccan',
+  MM: 'Burmese',
+  NP: 'Nepalese',
+  NL: 'Dutch',
+  NZ: 'New Zealander',
+  NI: 'Nicaraguan',
+  NG: 'Nigerian',
+  NO: 'Norwegian',
+  OM: 'Omani',
+  PK: 'Pakistani',
+  PA: 'Panamanian',
+  PY: 'Paraguayan',
+  PE: 'Peruvian',
+  PH: 'Filipino',
+  PL: 'Polish',
+  PT: 'Portuguese',
+  QA: 'Qatari',
+  RO: 'Romanian',
+  RU: 'Russian',
+  SA: 'Saudi Arabian',
+  SN: 'Senegalese',
+  RS: 'Serbian',
+  SG: 'Singaporean',
+  SK: 'Slovak',
+  SI: 'Slovene',
+  ZA: 'South African',
+  KR: 'South Korean',
+  ES: 'Spanish',
+  LK: 'Sri Lankan',
+  SE: 'Swedish',
+  CH: 'Swiss',
+  SY: 'Syrian',
+  TW: 'Taiwanese',
+  TZ: 'Tanzanian',
+  TH: 'Thai',
+  TN: 'Tunisian',
+  TR: 'Turkish',
+  UA: 'Ukrainian',
+  AE: 'Emirati',
+  GB: 'British',
+  US: 'American',
+  UY: 'Uruguayan',
+  UZ: 'Uzbekistani',
+  VE: 'Venezuelan',
+  VN: 'Vietnamese',
+  YE: 'Yemeni',
+  ZM: 'Zambian',
+  ZW: 'Zimbabwean',
+};
+
+export async function detectArea(): Promise<DetectedArea> {
+  const { status } = await Location.requestForegroundPermissionsAsync();
+  if (status !== 'granted') {
+    throw new Error(
+      'Izin lokasi ditolak. Aktifkan izin lokasi di pengaturan HP untuk memakai fitur ini.',
+    );
+  }
+
+  const position = await Location.getCurrentPositionAsync({
+    accuracy: Location.Accuracy.Balanced,
+  });
+  const [address] = await Location.reverseGeocodeAsync({
+    latitude: position.coords.latitude,
+    longitude: position.coords.longitude,
+  });
+
+  if (!address) {
+    throw new Error('Lokasi tidak dapat dikenali. Coba lagi nanti.');
+  }
+
+  const iso = address.isoCountryCode?.toUpperCase() ?? '';
+  return {
+    city: address.city ?? address.subregion ?? address.district ?? null,
+    country: address.country ?? null,
+    area: iso ? (COUNTRY_TO_AREA[iso] ?? null) : null,
+  };
+}
