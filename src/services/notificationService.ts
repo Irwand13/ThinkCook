@@ -6,6 +6,7 @@ import { Platform } from 'react-native';
 const REMINDER_KEY = 'thinkcook:reminder';
 const REMINDER_HOUR = 5;
 const REMINDER_MINUTE = 0;
+const CHANNEL_ID = 'daily-reminder';
 
 export function setupNotifications(): void {
   Notifications.setNotificationHandler({
@@ -73,11 +74,22 @@ export async function setDailyReminder(
         detail: 'Izin notifikasi belum diberikan.',
       };
     }
+    // Pembuatan channel itu best-effort: di sebagian perangkat / Expo Go
+    // pemanggilan native-nya bisa ditolak (mis. channel pernah dihapus),
+    // dan pengingat tetap bisa dijadwalkan tanpa channelId — Android
+    // memakai channel default. Gagal membuat channel tidak boleh
+    // menggagalkan pengingat.
+    let channelId: string | undefined;
     if (Platform.OS === 'android') {
-      await Notifications.setNotificationChannelAsync('daily-reminder', {
-        name: 'Pengingat Masak',
-        importance: AndroidImportance.DEFAULT,
-      });
+      try {
+        await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
+          name: 'Pengingat Masak',
+          importance: AndroidImportance.DEFAULT,
+        });
+        channelId = CHANNEL_ID;
+      } catch {
+        channelId = undefined;
+      }
     }
     const id = await Notifications.scheduleNotificationAsync({
       content: {
@@ -88,9 +100,7 @@ export async function setDailyReminder(
         type: Notifications.SchedulableTriggerInputTypes.DAILY,
         hour: REMINDER_HOUR,
         minute: REMINDER_MINUTE,
-        // channel yang dibuat di atas harus dipakai di sini, kalau tidak
-        // notifikasi jatuh ke channel default dan pengaturan channel sia-sia
-        channelId: 'daily-reminder',
+        ...(channelId ? { channelId } : {}),
       },
     });
     await AsyncStorage.setItem(REMINDER_KEY, id);

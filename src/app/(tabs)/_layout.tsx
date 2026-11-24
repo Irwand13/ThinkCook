@@ -38,13 +38,20 @@ export default function TabsLayout() {
           left: 20,
           right: 20,
           bottom: 16,
-          height: 72,
+          height: 88,
           borderRadius: radius.xl,
           backgroundColor: colors.card,
           borderTopWidth: 0,
           paddingTop: 6,
           paddingBottom: 6,
           ...shadows.floating,
+        },
+        // Ikon tab dibungkus kotak 31x28 bawaan React Navigation — pill
+        // 58x39 kita kejepit di dalamnya sampai glyph-nya hilang. Kotak ini
+        // diperbesar supaya pill muat utuh; tinggi bar ikut naik 72 -> 88.
+        tabBarIconStyle: {
+          width: 62,
+          height: 42,
         },
         tabBarItemStyle: {
           paddingVertical: 2,
