@@ -4,17 +4,22 @@ import { StatusBar } from 'expo-status-bar';
 import { useCallback, useState } from 'react';
 import { FlatList, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import RecipeCard from '../../components/RecipeCard';
+import FavoriteRow from '../../components/FavoriteRow';
 import { ListSkeleton } from '../../components/Skeleton';
-import { colors, spacing, styles } from '../../constants/styles';
+import { colors, styles } from '../../constants/styles';
 import { useResponsive } from '../../constants/responsive';
-import { getFavorites } from '../../services/favoriteService';
+import { getFavorites, removeFavorite } from '../../services/favoriteService';
 import { RecipeSummary } from '../../types/recipe';
 
 export default function FavoriteScreen() {
   const [favorites, setFavorites] = useState<RecipeSummary[]>([]);
   const [loading, setLoading] = useState(true);
-  const { columns, maxContentWidth } = useResponsive();
+  const { maxContentWidth } = useResponsive();
+
+  const handleRemoveFavorite = useCallback(async (id: number) => {
+    await removeFavorite(id);
+    setFavorites((current) => current.filter((fav) => fav.id !== id));
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -68,13 +73,11 @@ export default function FavoriteScreen() {
       ) : (
         <FlatList
           data={favorites}
-          key={columns === 2 ? 'grid-2' : 'list-1'}
-          numColumns={columns}
-          columnWrapperStyle={columns === 2 ? { gap: spacing.md } : undefined}
           keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => (
-            <RecipeCard recipe={item} variant="card" />
+            <FavoriteRow recipe={item} onRemove={handleRemoveFavorite} />
           )}
+          ItemSeparatorComponent={() => <View style={separatorStyle} />}
           contentContainerStyle={[
             styles.listContent,
             { maxWidth: maxContentWidth, width: '100%', alignSelf: 'center' },
@@ -85,3 +88,10 @@ export default function FavoriteScreen() {
     </SafeAreaView>
   );
 }
+
+// Garis pemisah baris, sejajar kolom teks (thumbnail 64 + jeda 12).
+const separatorStyle = {
+  height: 1,
+  backgroundColor: colors.border,
+  marginLeft: 76,
+};

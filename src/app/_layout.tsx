@@ -11,20 +11,17 @@ import {
 import NetInfo from '@react-native-community/netinfo';
 import { useFonts } from 'expo-font';
 import { router, Stack, useRootNavigationState, useSegments } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { ActivityIndicator, AppState, View } from 'react-native';
 import OfflineBanner from '../components/OfflineBanner';
 import { colors } from '../constants/styles';
+import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import {
-  AuthUser,
-  getSessionUser,
-  onAuthChange,
-} from '../services/authService';
 import { setupNotifications } from '../services/notificationService';
 import { refreshStaleCaches } from '../services/recipeService';
 
-export default function RootLayout() {
+function AppShell() {
+  const { user, loading } = useAuth();
   const [fontsLoaded] = useFonts({
     Fraunces_600SemiBold,
     Fraunces_600SemiBold_Italic,
@@ -33,7 +30,6 @@ export default function RootLayout() {
     PlusJakartaSans_600SemiBold,
     PlusJakartaSans_700Bold,
   });
-  const [checking, setChecking] = useState(true);
   const segments = useSegments();
   const rootNav = useRootNavigationState();
 
@@ -45,42 +41,13 @@ export default function RootLayout() {
     if (!rootNav?.key) {
       return;
     }
-    let aktif = true;
-
-    const routeFor = (sessionUser: AuthUser | null): void => {
-      const inLogin = segments[0] === 'login';
-      if (!sessionUser && !inLogin) {
-        router.replace('/login');
-      } else if (sessionUser && inLogin) {
-        router.replace('/(tabs)');
-      }
-    };
-
-    getSessionUser()
-      .then((sessionUser) => {
-        if (!aktif) {
-          return;
-        }
-        setChecking(false);
-        routeFor(sessionUser);
-      })
-      .catch(() => {
-        if (aktif) {
-          setChecking(false);
-        }
-      });
-
-    const unsubscribe = onAuthChange((sessionUser) => {
-      if (aktif) {
-        routeFor(sessionUser);
-      }
-    });
-
-    return () => {
-      aktif = false;
-      unsubscribe();
-    };
-  }, [segments, rootNav?.key]);
+    const inLogin = segments[0] === 'login';
+    if (!user && !inLogin) {
+      router.replace('/login');
+    } else if (user && inLogin) {
+      router.replace('/(tabs)');
+    }
+  }, [segments, rootNav?.key, user]);
 
   // Kembali ke foreground: segarkan sesi Supabase, lalu segarkan cache
   // yang sudah basi kalau sedang online.
@@ -100,7 +67,7 @@ export default function RootLayout() {
     return () => subscription.remove();
   }, []);
 
-  if (!fontsLoaded || checking) {
+  if (!fontsLoaded || loading) {
     return (
       <View
         style={{
@@ -130,5 +97,13 @@ export default function RootLayout() {
         />
       </Stack>
     </View>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <AppShell />
+    </AuthProvider>
   );
 }

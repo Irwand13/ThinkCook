@@ -18,8 +18,8 @@ function TabIcon({
     <View style={[tabStyles.iconWrap, focused && tabStyles.iconWrapActive]}>
       <Ionicons
         name={focused ? activeName : inactiveName}
-        size={22}
-        color={focused ? colors.white : colors.secondary}
+        size={26}
+        color={focused ? colors.white : colors.text}
       />
     </View>
   );
@@ -31,23 +31,23 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: colors.primaryDark,
-        tabBarInactiveTintColor: colors.secondary,
+        tabBarInactiveTintColor: colors.text,
         tabBarHideOnKeyboard: true,
         tabBarStyle: {
           position: 'absolute',
           left: 20,
           right: 20,
           bottom: 16,
-          height: 68,
+          height: 72,
           borderRadius: radius.xl,
           backgroundColor: colors.card,
           borderTopWidth: 0,
-          paddingTop: 8,
-          paddingBottom: 8,
+          paddingTop: 6,
+          paddingBottom: 6,
           ...shadows.floating,
         },
         tabBarItemStyle: {
-          paddingVertical: 4,
+          paddingVertical: 2,
         },
         tabBarLabelStyle: {
           fontFamily: fonts.bodySemi,
@@ -118,13 +118,13 @@ export default function TabsLayout() {
 
 const tabStyles = StyleSheet.create({
   iconWrap: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 5,
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },
   iconWrapActive: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.primaryDark,
   },
 });

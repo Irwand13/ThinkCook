@@ -6,13 +6,13 @@ import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-nat
 import { SafeAreaView } from 'react-native-safe-area-context';
 import StatCard from '../../components/StatCard';
 import { cardShadow, colors, fonts, radius, spacing } from '../../constants/styles';
-import { AuthUser, getSessionUser, logout } from '../../services/authService';
+import { useAuth } from '../../contexts/AuthContext';
 import { getCategories, getRecipes } from '../../services/recipeService';
 import { getFavorites } from '../../services/favoriteService';
 import { isReminderEnabled, setDailyReminder } from '../../services/notificationService';
 
 export default function ProfileScreen() {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const { user, signOut } = useAuth();
   const [favoriteCount, setFavoriteCount] = useState(0);
   const [categoryCount, setCategoryCount] = useState(0);
   const [recipeCount, setRecipeCount] = useState<number | null>(null);
@@ -23,26 +23,28 @@ export default function ProfileScreen() {
   const handleReminderToggle = async (next: boolean): Promise<void> => {
     setReminderBusy(true);
     setReminderError(null);
-    const ok = await setDailyReminder(next);
-    if (!ok) {
-      setReminderError(
-        'Izin notifikasi belum diberikan. Aktifkan di pengaturan HP.',
-      );
-    } else {
-      setReminderOn(next);
+    try {
+      const result = await setDailyReminder(next);
+      if (result.ok) {
+        setReminderOn(next);
+      } else if (result.reason === 'permission') {
+        setReminderError(
+          'Izin notifikasi belum diberikan. Aktifkan di pengaturan HP.',
+        );
+      } else {
+        setReminderError(`Pengingat gagal dijadwalkan: ${result.detail}`);
+      }
+    } catch {
+      setReminderError('Pengingat gagal dijadwalkan. Coba lagi.');
+    } finally {
+      setReminderBusy(false);
     }
-    setReminderBusy(false);
   };
 
   useFocusEffect(
     useCallback(() => {
       let aktif = true;
 
-      getSessionUser().then((sessionUser) => {
-        if (aktif) {
-          setUser(sessionUser);
-        }
-      });
       getFavorites().then((data) => {
         if (aktif) {
           setFavoriteCount(data.length);
@@ -151,7 +153,7 @@ export default function ProfileScreen() {
             pressed && profileStyles.buttonPressed,
           ]}
           onPress={() => {
-            void logout().then(() => {
+            void signOut().then(() => {
               router.replace('/login');
             });
           }}

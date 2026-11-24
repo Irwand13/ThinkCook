@@ -44,6 +44,7 @@ export default function HomeScreen() {
     city: string | null;
     country: string | null;
     area: string;
+    note: string | null;
   } | null>(null);
   const [areaLoading, setAreaLoading] = useState(false);
   const [areaError, setAreaError] = useState<string | null>(null);
@@ -88,11 +89,31 @@ export default function HomeScreen() {
         );
         return;
       }
-      setAreaMode({
-        city: detected.city,
-        country: detected.country,
-        area: detected.area,
-      });
+      const meals = await getRecipesByArea(detected.area);
+      if (meals.length > 0) {
+        setAreaMode({
+          city: detected.city,
+          country: detected.country,
+          area: detected.area,
+          note: null,
+        });
+        return;
+      }
+      // TheMealDB mencantumkan area ini tapi tidak punya resepnya
+      // (mis. Indonesian) — jangan kunci feed ke tampilan kosong.
+      const fallback = await getRecipesByArea('Malaysian');
+      if (fallback.length > 0) {
+        setAreaMode({
+          city: detected.city,
+          country: detected.country,
+          area: 'Malaysian',
+          note: `TheMealDB belum punya resep masakan ${detected.area}, menampilkan masakan Malaysian.`,
+        });
+        return;
+      }
+      setAreaError(
+        `TheMealDB belum punya resep masakan ${detected.area} — menampilkan semua resep.`,
+      );
     } catch (error) {
       setAreaError(
         error instanceof Error ? error.message : 'Gagal mendeteksi lokasi.',
@@ -253,6 +274,9 @@ export default function HomeScreen() {
                 {areaMode.city ? `${areaMode.city}, ` : ''}
                 {areaMode.country ?? ''} · masakan {areaMode.area}
               </Text>
+              {areaMode.note ? (
+                <Text style={homeStyles.locationError}>{areaMode.note}</Text>
+              ) : null}
             </View>
             <Pressable
               style={({ pressed }) => [

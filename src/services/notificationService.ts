@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
+import { AndroidImportance } from 'expo-notifications';
 import { Platform } from 'react-native';
 
 const REMINDER_KEY = 'thinkcook:reminder';
@@ -26,21 +27,56 @@ async function ensurePermission(): Promise<boolean> {
   return next.status === 'granted';
 }
 
+export type ReminderResult =
+  | { ok: true }
+  | {
+      ok: false;
+      reason: 'permission' | 'schedule';
+      detail: string;
+    };
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 export async function isReminderEnabled(): Promise<boolean> {
   const id = await AsyncStorage.getItem(REMINDER_KEY);
   return id !== null;
 }
 
-export async function setDailyReminder(enabled: boolean): Promise<boolean> {
-  if (enabled) {
+export async function setDailyReminder(
+  enabled: boolean,
+): Promise<ReminderResult> {
+  if (!enabled) {
+    try {
+      const id = await AsyncStorage.getItem(REMINDER_KEY);
+      if (id) {
+        await Notifications.cancelScheduledNotificationAsync(id);
+        await AsyncStorage.removeItem(REMINDER_KEY);
+      }
+      return { ok: true };
+    } catch (error) {
+      return {
+        ok: false,
+        reason: 'schedule',
+        detail: errorMessage(error),
+      };
+    }
+  }
+
+  try {
     const granted = await ensurePermission();
     if (!granted) {
-      return false;
+      return {
+        ok: false,
+        reason: 'permission',
+        detail: 'Izin notifikasi belum diberikan.',
+      };
     }
     if (Platform.OS === 'android') {
       await Notifications.setNotificationChannelAsync('daily-reminder', {
         name: 'Pengingat Masak',
-        importance: Notifications.AndroidImportance.DEFAULT,
+        importance: AndroidImportance.DEFAULT,
       });
     }
     const id = await Notifications.scheduleNotificationAsync({
@@ -52,18 +88,20 @@ export async function setDailyReminder(enabled: boolean): Promise<boolean> {
         type: Notifications.SchedulableTriggerInputTypes.DAILY,
         hour: REMINDER_HOUR,
         minute: REMINDER_MINUTE,
+        // channel yang dibuat di atas harus dipakai di sini, kalau tidak
+        // notifikasi jatuh ke channel default dan pengaturan channel sia-sia
+        channelId: 'daily-reminder',
       },
     });
     await AsyncStorage.setItem(REMINDER_KEY, id);
-    return true;
+    return { ok: true };
+  } catch (error) {
+    return {
+      ok: false,
+      reason: 'schedule',
+      detail: errorMessage(error),
+    };
   }
-
-  const id = await AsyncStorage.getItem(REMINDER_KEY);
-  if (id) {
-    await Notifications.cancelScheduledNotificationAsync(id);
-    await AsyncStorage.removeItem(REMINDER_KEY);
-  }
-  return true;
 }
 
 // Notifikasi favorit hanya dikirim kalau izin sudah diberikan — jangan
