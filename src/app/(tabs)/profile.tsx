@@ -4,18 +4,12 @@ import { StatusBar } from 'expo-status-bar';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import StatCard from '../../components/StatCard';
 import { cardShadow, colors, fonts, radius, spacing } from '../../constants/styles';
 import { useAuth } from '../../contexts/AuthContext';
-import { getCategories, getRecipes } from '../../services/recipeService';
-import { getFavorites } from '../../services/favoriteService';
 import { isReminderEnabled, setDailyReminder } from '../../services/notificationService';
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
-  const [favoriteCount, setFavoriteCount] = useState(0);
-  const [categoryCount, setCategoryCount] = useState(0);
-  const [recipeCount, setRecipeCount] = useState<number | null>(null);
   const [reminderOn, setReminderOn] = useState(false);
   const [reminderBusy, setReminderBusy] = useState(false);
   const [reminderError, setReminderError] = useState<string | null>(null);
@@ -45,27 +39,6 @@ export default function ProfileScreen() {
     useCallback(() => {
       let aktif = true;
 
-      getFavorites().then((data) => {
-        if (aktif) {
-          setFavoriteCount(data.length);
-        }
-      });
-      getCategories()
-        .then((names) => {
-          if (aktif) {
-            setCategoryCount(names.length);
-          }
-        })
-        .catch(() => {
-        });
-      getRecipes('Semua')
-        .then((data) => {
-          if (aktif) {
-            setRecipeCount(data.length);
-          }
-        })
-        .catch(() => {
-        });
       isReminderEnabled().then((enabled) => {
         if (aktif) {
           setReminderOn(enabled);
@@ -85,23 +58,24 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={profileStyles.content}
       >
-        <View style={profileStyles.avatarCircle}>
-          <Text style={profileStyles.avatarInitial}>
-            {(user?.name ?? 'I').charAt(0).toUpperCase()}
-          </Text>
-        </View>
-        <Text style={profileStyles.name}>{user?.name ?? 'Irwanda'}</Text>
-        <Text style={profileStyles.subtitle}>
-          {user?.email ?? 'Selamat datang di ThinkCook!'}
-        </Text>
-
-        <View style={profileStyles.statRow}>
-          <StatCard
-            label="Resep"
-            value={recipeCount === null ? '–' : String(recipeCount)}
-          />
-          <StatCard label="Kategori" value={`${categoryCount}`} />
-          <StatCard label="Favorit" value={String(favoriteCount)} />
+        <View style={profileStyles.infoCard}>
+          <View style={profileStyles.identityHead}>
+            <View style={profileStyles.avatarSmall}>
+              <Text style={profileStyles.avatarSmallInitial}>
+                {(user?.name ?? 'I').charAt(0).toUpperCase()}
+              </Text>
+            </View>
+          </View>
+          <View style={profileStyles.row}>
+            <Text style={profileStyles.rowLabel}>Nama</Text>
+            <Text style={profileStyles.rowValue}>{user?.name ?? 'Irwanda'}</Text>
+          </View>
+          <View style={[profileStyles.row, profileStyles.rowDivider]}>
+            <Text style={profileStyles.rowLabel}>Email</Text>
+            <Text style={profileStyles.rowValue}>
+              {user?.email ?? 'Selamat datang di ThinkCook!'}
+            </Text>
+          </View>
         </View>
 
         <View style={profileStyles.infoCard}>
@@ -174,38 +148,22 @@ const profileStyles = StyleSheet.create({
     paddingTop: 28,
     paddingBottom: 112,
   },
-  avatarCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
+  identityHead: {
+    alignItems: 'center',
+    paddingBottom: 12,
+  },
+  avatarSmall: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    alignSelf: 'center',
   },
-  avatarInitial: {
-    fontSize: 36,
+  avatarSmallInitial: {
+    fontSize: 20,
     fontFamily: fonts.heading,
     color: colors.white,
-  },
-  name: {
-    fontSize: 24,
-    fontFamily: fonts.heading,
-    color: colors.text,
-    textAlign: 'center',
-    marginTop: 14,
-  },
-  subtitle: {
-    fontSize: 14,
-    fontFamily: fonts.body,
-    color: colors.secondary,
-    textAlign: 'center',
-    marginTop: 6,
-  },
-  statRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 26,
   },
   infoCard: {
     backgroundColor: colors.card,
@@ -253,6 +211,8 @@ const profileStyles = StyleSheet.create({
     fontSize: 14,
     fontFamily: fonts.body,
     color: colors.secondary,
+    flexShrink: 1,
+    textAlign: 'right',
   },
   logoutButton: {
     flexDirection: 'row',
